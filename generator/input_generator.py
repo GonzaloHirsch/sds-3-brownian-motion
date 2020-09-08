@@ -4,6 +4,7 @@ import argparse
 import random as rnd
 
 # Usage examples
+# python3 generator/input_generator.py -L 6 -N 101 -r 0.2 -m 0.9 -R 0.7 -M 2 -v 2 -retry 40
 
 # Returs a list of lists containing the points
 # Each list has:
@@ -33,7 +34,7 @@ def generate_points(input_area_length, particle_number, small_radius, small_mass
         target_radius = small_radius
         target_mass = small_mass
 
-        # Generating velocity
+        # Generating velocity, it is done using accepted answer in https://stackoverflow.com/questions/5837572/generate-a-random-point-within-a-circle-uniformly
         r = velocity_mod_limit * math.sqrt(random.uniform(0, 1))
         theta = random.uniform(0, 1) * 2 * math.pi
         target_vx = r * math.cos(theta)
@@ -68,7 +69,7 @@ def generate_points(input_area_length, particle_number, small_radius, small_mass
 # Generates the static file configuration given:
 #   - filename -> Name of the static file to be used
 #   - area_length -> Total length of the area of study
-#   - layers -> Amount of layers for the inner configuration
+#   - points -> Points using the structure indicated at the top of the file
 def generate_static_file(filename, area_length, points):
     f = open(filename, 'w')
 
@@ -82,7 +83,7 @@ def generate_static_file(filename, area_length, points):
 
 # Generates the dynamic file configuration given:
 #   - filename -> Name of the dynamic file to be used
-#   - area_length -> Total length of the area of study
+#   - points -> Points using the structure indicated at the top of the file
 def generate_dynamic_file(filename, points):
     f = open(filename, 'w')
 

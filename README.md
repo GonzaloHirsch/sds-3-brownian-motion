@@ -16,4 +16,4 @@ Where:
  - **R** -> Radius of big particle
  - **M** -> Mass of big particle
  - **v** -> Max velocity module
- - **retry** -> Amount of retries in case of not finding spot for particle
+ - **retry** -> Amount of retries in case of not finding spot for particle (the bigger the better, but take into account the time it takes)
