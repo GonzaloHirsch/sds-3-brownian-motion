@@ -118,7 +118,7 @@ public class BrownianMotion {
     }
 
     /**
-     * Class to wrap collision information that is needed after a collision calculation is prformed
+     * Class to wrap collision information that is needed after a collision calculation is performed
      */
     public static class CollisionInformation{
         private final int firstParticleId;
