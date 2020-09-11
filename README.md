@@ -19,6 +19,7 @@ Where:
  - **retry** -> Amount of retries in case of not finding spot for particle (the bigger the better, but take into account the time it takes)
  
 ## Ovito Configuration
+A configuration is included in the repository inside _visualization/configuration.ovito_, it might have some issues with the loading. The Boundary Limits might need adjustments.
 
 ### Color Coding
 In **Pipelines**(connection symbol), add a **Color Coding** modification.
