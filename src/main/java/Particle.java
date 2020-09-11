@@ -131,6 +131,7 @@ public class Particle implements Comparable<Particle> {
      */
     public double calculateCollisionDelta(Particle p){
         // TODO: HACER ESTO
+
         return 0;
     }
 
@@ -138,10 +139,36 @@ public class Particle implements Comparable<Particle> {
      * Calculates the collision time to a wall, indicated by the index
      * @param wallIndex index of a wall (-1: top, -2: right, -3: bottom, -4: left)
      * @param areaLength length of the area of study
-     * @return delta of time to collision
+     * @return delta of time to collision, max value if not possible
      */
     public double calculateCollisionDelta(int wallIndex, double areaLength){
-        // TODO: HACER ESTO
-        return 0;
+        switch (wallIndex){
+            case -1:
+                if (this.vy <= 0){
+                    return Double.MAX_VALUE;
+                } else {
+                    return (areaLength - this.radius - this.vy)/this.y;
+                }
+            case -2:
+                if (this.vx <= 0){
+                    return Double.MAX_VALUE;
+                } else {
+                    return (areaLength - this.radius - this.vx)/this.x;
+                }
+            case -3:
+                if (this.vy >= 0){
+                    return Double.MAX_VALUE;
+                } else {
+                    return (this.radius - this.vy)/this.y;
+                }
+            case -4:
+                if (this.vx >= 0){
+                    return Double.MAX_VALUE;
+                } else {
+                    return (this.radius - this.vx)/this.x;
+                }
+            default:
+                return Double.MAX_VALUE;
+        }
     }
 }
