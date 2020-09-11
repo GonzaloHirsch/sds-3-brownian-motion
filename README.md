@@ -1,7 +1,7 @@
 # Simulación de Sistemas - TP3
 
 ## File Generation
-File generation is done randomnly, without superposition.
+File generation is done randomly, without superposition.
 
 To run the file generation:
 ```
