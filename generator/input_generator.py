@@ -34,27 +34,42 @@ def generate_points(input_area_length, particle_number, small_radius, small_mass
         target_radius = small_radius
         target_mass = small_mass
 
-        # Generating velocity, it is done using accepted answer in https://stackoverflow.com/questions/5837572/generate-a-random-point-within-a-circle-uniformly
-        r = velocity_mod_limit * math.sqrt(random.uniform(0, 1))
-        theta = random.uniform(0, 1) * 2 * math.pi
-        target_vx = r * math.cos(theta)
-        target_vy = r * math.sin(theta)
+        # Take into account border superposition
+        isTouchingBorder = False
 
-        # Verify it does not overlap others
-        points_verified = 0
-        while points_verified < len(points):
-            point_prime = points[points_verified]
-            distance = math.sqrt(((target_x - point_prime[0])**2) + ((target_y - point_prime[1])**2)) - target_radius - point_prime[5]
-            if distance <= 0:
-                break
+        if target_x + target_radius >= input_area_length:
+            isTouchingBorder = True
+        elif target_y + target_radius >= input_area_length:
+            isTouchingBorder = True
+        elif target_x - target_radius <= 0:
+            isTouchingBorder = True
+        elif target_y - target_radius <= 0:
+            isTouchingBorder = True
+
+        if not isTouchingBorder:
+            # Generating velocity, it is done using accepted answer in https://stackoverflow.com/questions/5837572/generate-a-random-point-within-a-circle-uniformly
+            r = velocity_mod_limit * math.sqrt(random.uniform(0, 1))
+            theta = random.uniform(0, 1) * 2 * math.pi
+            target_vx = r * math.cos(theta)
+            target_vy = r * math.sin(theta)
+
+            # Verify it does not overlap others
+            points_verified = 0
+            while points_verified < len(points):
+                point_prime = points[points_verified]
+                distance = math.sqrt(((target_x - point_prime[0])**2) + ((target_y - point_prime[1])**2)) - target_radius - point_prime[5]
+                if distance <= 0:
+                    break
+                else:
+                    points_verified += 1
+
+            # In this case it is ok
+            if points_verified == len(points):
+                points.append([target_x, target_y, target_vx, target_vy, target_mass, target_radius])
+                points_added += 1
+                tries = 0
             else:
-                points_verified += 1
-
-        # In this case it is ok
-        if points_verified == len(points):
-            points.append([target_x, target_y, target_vx, target_vy, target_mass, target_radius])
-            points_added += 1
-            tries = 0
+                tries += 1
         else:
             tries += 1
 
@@ -96,10 +111,26 @@ def generate_dynamic_file(filename, points):
 
     f.close()
 
+def generate_animation_file(filename, points):
+    f = open(filename, 'w')
+
+    # We provide only the dynamic configuration at time 0
+    f.write('{}\n'.format(len(points)))
+
+    # We provide only the dynamic configuration at time 0
+    f.write('0\n')
+
+    # Adding the randomly generated
+    for point in points:
+        f.write('{}\t{}\t{}\t{}\t{}\t{}\n'.format(point[4], point[5], point[0], point[1], point[2], point[3]))
+
+    f.close()
+
 # Generates both the dynamic and the static file
 def generate_files(area_length, points):
     generate_static_file('./parsable_files/static.txt', area_length, points)
     generate_dynamic_file('./parsable_files/dynamic.txt', points)
+    generate_animation_file('./parsable_files/animation.xyz', points)
 
 # main() function
 def main():
