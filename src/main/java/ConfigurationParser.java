@@ -2,7 +2,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
 
-// TODO: HACER ESTO
 public class ConfigurationParser {
     public static double areaLength;
     public static Map<Integer, Particle> particles = new HashMap<>();

@@ -17,7 +17,13 @@ Where:
  - **M** -> Mass of big particle
  - **v** -> Max velocity module
  - **retry** -> Amount of retries in case of not finding spot for particle (the bigger the better, but take into account the time it takes)
- 
+
+## Simulation
+To run the simulation, the command is:
+```
+java -jar ./target/sds-tp3-1.0-SNAPSHOT-jar-with-dependencies.jar -sf ./parsable_files/static.txt -df ./parsable_files/dynamic.txt -t 50
+```
+
 ## Ovito Configuration
 A configuration is included in the repository inside _visualization/configuration.ovito_, it might have some issues with the loading. The Boundary Limits might need adjustments.
 

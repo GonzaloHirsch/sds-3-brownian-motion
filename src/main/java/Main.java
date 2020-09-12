@@ -1,15 +1,8 @@
-import com.sun.xml.internal.ws.wsdl.writer.document.Part;
-
 import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
