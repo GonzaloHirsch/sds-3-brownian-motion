@@ -44,11 +44,11 @@ def parse_particle_radius(filename):
     length = 0
 
     for line in f:
+        data = line.rstrip("\n").split(" ")
         if index > 0:
-            data = line.rstrip("\n").split(" ")
             radius.append(data[1])
         else:
-            length = float(data)
+            length = float(data[0])
         index += 1
 
     return radius, length
@@ -58,7 +58,7 @@ def generate_animation_file(filename, chosen_frames, particle_radius, area_lengt
     n = len(particle_radius)
 
     for frames in chosen_frames:
-        f.write('{}\n'.format(n))
+        f.write('{}\n'.format(n + 4))
         f.write('\n')
         point_index = 0
 

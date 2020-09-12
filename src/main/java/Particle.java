@@ -132,10 +132,10 @@ public class Particle implements Comparable<Particle> {
      */
     public double calculateCollisionDelta(Particle p){
         // Calculating deltaV and deltaR
-        double dvx = this.vx - p.getVx();
-        double dvy = this.vy - p.getVy();
-        double dx = this.x - p.getX();
-        double dy = this.y - p.getY();
+        double dvx = p.getVx() - this.vx;
+        double dvy = p.getVy() - this.vy;
+        double dx = p.getX() - this.x;
+        double dy = p.getY() - this.y;
 
         double sigma = this.radius + p.getRadius();
 
@@ -153,7 +153,7 @@ public class Particle implements Comparable<Particle> {
         } else if (d < 0) {
             return Double.MAX_VALUE;
         }
-        return - (dotdvdr + Math.sqrt(d)) / dotdvdv;
+        return - ((dotdvdr + Math.sqrt(d)) / dotdvdv);
     }
 
 
@@ -194,25 +194,25 @@ public class Particle implements Comparable<Particle> {
 
     public void calculateParticleCollisionVelocity(Particle p) {
         // Calculating deltaV and deltaR
-        double dvx = this.vx - p.getVx();
-        double dvy = this.vy - p.getVy();
-        double dx = this.x - p.getX();
-        double dy = this.y - p.getY();
+        double dvx = p.getVx() - this.vx;
+        double dvy = p.getVy() - this.vy;
+        double dx = p.getX() - this.x;
+        double dy = p.getY() - this.y;
 
         double sigma = this.radius + p.getRadius();
 
         // Calculating dot product
         double dotdvdr = dvx * dx + dvy * dy;
         // Calculate impulse conservation (Jx, Jy)
-        double J = (2 * this.mass * p.getMass() * dotdvdr) / sigma * (this.mass + p.getMass());
-        double Jx = J * dx / sigma;
-        double Jy = J * dy / sigma;
+        double J = (2 * this.mass * p.getMass() * dotdvdr) / (sigma * (this.mass + p.getMass()));
+        double Jx = (J * dx) / sigma;
+        double Jy = (J * dy) / sigma;
 
         // Updating this particle's velocity
-        this.vx = this.vx + Jx / this.mass;
-        this.vy = this.vy + Jy / this.mass;
+        this.vx = this.vx + (Jx / this.mass);
+        this.vy = this.vy + (Jy / this.mass);
         // Updating other particles velocity
-        p.setVx(p.getVx() + Jx / p.getMass());
-        p.setVy(p.getVy() + Jy / p.getMass());
+        p.setVx(p.getVx() - (Jx / p.getMass()));
+        p.setVy(p.getVy() - (Jy / p.getMass()));
     }
 }
