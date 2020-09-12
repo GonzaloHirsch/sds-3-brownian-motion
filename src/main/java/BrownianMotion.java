@@ -8,11 +8,7 @@ public class BrownianMotion {
     private TreeSet<CollisionInformation> collisions;
     private final double areaLength;
 
-    private static final int TOP_WALL_INDEX = -1;
-    private static final int RIGHT_WALL_INDEX = -2;
-    private static final int BOTTOM_WALL_INDEX = -3;
-    private static final int LEFT_WALL_INDEX = -4;
-    private static final int[] WALLS = new int[]{TOP_WALL_INDEX, RIGHT_WALL_INDEX, BOTTOM_WALL_INDEX, LEFT_WALL_INDEX};
+    private static final int[] WALLS = new int[]{Constant.TOP_WALL_INDEX, Constant.RIGHT_WALL_INDEX, Constant.BOTTOM_WALL_INDEX, Constant.LEFT_WALL_INDEX};
 
     public BrownianMotion(final double areaLength, final Map<Integer, Particle> particles){
         // Map all particles to the id

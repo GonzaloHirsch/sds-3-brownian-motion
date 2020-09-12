@@ -121,7 +121,8 @@ public class Particle implements Comparable<Particle> {
      * @param delta time to be used to update position
      */
     public void updatePositionForDelta(double delta){
-        // TODO: HACER ESTO
+        this.x = this.x + this.vx * delta;
+        this.y = this.y + this.vy * delta;
     }
 
     /**
@@ -130,26 +131,47 @@ public class Particle implements Comparable<Particle> {
      * @return delta of time to collision
      */
     public double calculateCollisionDelta(Particle p){
-        // TODO: HACER ESTO
+        // Calculating deltaV and deltaR
+        double dvx = this.vx - p.getVx();
+        double dvy = this.vy - p.getVy();
+        double dx = this.x - p.getX();
+        double dy = this.y - p.getY();
 
-        return 0;
+        double sigma = this.radius + p.getRadius();
+
+        // Calculating dot product
+        double dotdvdr = dvx * dx + dvy * dy;
+        double dotdvdv = dvx * dvx + dvy * dvy;
+        double dotdrdr = dx * dx + dy * dy;
+
+        // Calculating d
+        double d = Math.pow(dotdvdr, 2) - dotdvdv * (dotdrdr - Math.pow(sigma, 2));
+
+        // Dot product between deltaV and delta R
+        if (dotdvdr >= 0) {
+            return Double.MAX_VALUE;
+        } else if (d < 0) {
+            return Double.MAX_VALUE;
+        }
+        return - (dotdvdr + Math.sqrt(d)) / dotdvdv;
     }
+
 
     /**
      * Calculates the collision time to a wall, indicated by the index
-     * @param wallIndex index of a wall (-1: top, -2: right, -3: bottom, -4: left)
+     * @param wallIndex index of a wall (Constant.TOP_WALL_INDEX: top, -2: right, -3: bottom, Constant.LEFT_WALL_INDEX: left)
      * @param areaLength length of the area of study
      * @return delta of time to collision, max value if not possible
      */
     public double calculateCollisionDelta(int wallIndex, double areaLength){
         switch (wallIndex){
-            case -1:
+            case Constant.TOP_WALL_INDEX:
                 if (this.vy <= 0){
                     return Double.MAX_VALUE;
                 } else {
                     return (areaLength - this.radius - this.vy)/this.y;
                 }
-            case -2:
+            case Constant.RIGHT_WALL_INDEX:
                 if (this.vx <= 0){
                     return Double.MAX_VALUE;
                 } else {
@@ -161,7 +183,7 @@ public class Particle implements Comparable<Particle> {
                 } else {
                     return (this.radius - this.vy)/this.y;
                 }
-            case -4:
+            case Constant.LEFT_WALL_INDEX:
                 if (this.vx >= 0){
                     return Double.MAX_VALUE;
                 } else {
@@ -170,5 +192,23 @@ public class Particle implements Comparable<Particle> {
             default:
                 return Double.MAX_VALUE;
         }
+    }
+
+    /**
+     * Calculate the new velocity of a particle when colliding with a wall
+     * @param wallIndex index of a wall (Constant.TOP_WALL_INDEX: top, Constant.RIGHT_WALL_INDEX: right, Constant.BOTTOM_WALL_INDEX: bottom, Constant.LEFT_WALL_INDEX: left)
+     */
+    public void calculateWallCollisionVelocity(int wallIndex) {
+        if (wallIndex == Constant.TOP_WALL_INDEX || wallIndex == Constant.BOTTOM_WALL_INDEX) {
+            // Hitting horizontal walls inverts the vy velocity
+            this.vy = -1 * this.vy;
+        } else {
+            // Hitting vertical walls inverts the vx velocity
+            this.vx = -1 * this.vx;
+        }
+    }
+
+    public void calculateParticleCollisionVelocity(Particle p) {
+
     }
 }
