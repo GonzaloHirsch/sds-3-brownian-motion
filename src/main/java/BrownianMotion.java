@@ -5,7 +5,7 @@ import java.util.stream.Collectors;
 
 public class BrownianMotion {
     private final Map<Integer, Particle> particles;
-    private TreeSet<CollisionInformation> collisions;
+    private TreeSet<CollisionInformation> collisions = new TreeSet<>();
     private final double areaLength;
 
     private static final int[] WALLS = new int[]{Constant.TOP_WALL_INDEX, Constant.RIGHT_WALL_INDEX, Constant.BOTTOM_WALL_INDEX, Constant.LEFT_WALL_INDEX};
@@ -14,25 +14,10 @@ public class BrownianMotion {
         // Map all particles to the id
         this.particles = particles;
         this.areaLength = areaLength;
-        this.collisions = new TreeSet<>();
-    }
 
-    /**
-     * Method that simulates an iteration of the algorithm, it calculates the first collision and then updates particles acording to the calculated time
-     * @return Collection of Particles with the given particles
-     */
-//    public Collection<Particle> simulateUntilCollision(){
-//        // Calculate particle-particle or particle-wall collision
-//        CollisionInformation information = this.computeCollisions();
-//
-//        // Update the positions of all particles
-//        this.updateParticlePositionsForDelta(information.delta);
-//
-//        // Update the velocity of the collided particles
-//        this.updateCollidedParticlesVelocity(information);
-//
-//        return this.particles.values();
-//    }
+        // Computing all the collisions one time
+        this.computeStartingCollisions();
+    }
 
     /**
      * Given a delta of time, updates the positions of all the particles based on the movement equations
@@ -40,7 +25,7 @@ public class BrownianMotion {
      * @param delta of time to be used in order to update
      */
     private void updateParticlePositionsForDelta(double delta){
-        // TODO: HACER ESTO
+        this.particles.values().forEach(p -> p.updatePositionForDelta(delta));
     }
 
     /**
@@ -50,8 +35,6 @@ public class BrownianMotion {
     private void updateCollidedParticlesVelocity(CollisionInformation information){
         // TODO: HACER ESTO
     }
-
-
 
     /**
      * Method to compute the collisions and determine the first collision to be updated.
@@ -66,61 +49,113 @@ public class BrownianMotion {
      * @return CollisionInformation object with the information to be able to perform updates
      */
     private void computeStartingCollisions(){
-        Particle current;
+        Particle current, other;
+        int n = this.particles.size();
 
-        for (int index = 0; index < this.particles.size(); index++){
+        for (int index = 0; index < n; index++){
             current = this.particles.get(index);
+            for (int sub_index = index + 1; sub_index < n; sub_index++){
+                other = this.particles.get(sub_index);
 
-            this.calculateCollisionForParticle(current);
+                // Computing the collision
+                collisions.add(new CollisionInformation(current.getId(), other.getId(), current.calculateCollisionDelta(other)));
+            }
+
+            // Compare to the walls
+            for (int wall : WALLS){
+                collisions.add(new CollisionInformation(current.getId(), wall, current.calculateCollisionDelta(wall, this.areaLength)));
+            }
         }
-
     }
 
-    public void calculateNextCollisions() {
-        CollisionInformation currentCollision = collisions.first();
-        int firstId = currentCollision.getFirstParticleId();
-        int secondId = currentCollision.getSecondParticleId();
+    /**
+     * Method that simulates an iteration of the algorithm, it calculates the first collision and then updates particles acording to the calculated time
+     * @return Collection of Particles with the given particles
+     */
+    public Collection<Particle> simulateUntilCollision() {
+        // Get the first collision that's going to happen
+        CollisionInformation currentCollision = this.collisions.first();
 
-        this.updateCollidedParticlesVelocity(currentCollision);
+        // Check if the collision was for the main particle
+        this.checkIfMainHitWall(currentCollision);
+
+        // Remove the unwanted collisions
+        this.collisions = this.collisions.stream().filter(c -> c.firstParticleId != currentCollision.firstParticleId && c.firstParticleId != currentCollision.secondParticleId && c.secondParticleId != currentCollision.firstParticleId && c.secondParticleId != currentCollision.secondParticleId).collect(Collectors.toCollection(TreeSet::new));
+
+        // Updating the deltas for each remaining collision
+        this.collisions.forEach(c -> c.delta -= currentCollision.delta);
+
+        // Updating the particle positions for a given delta
         this.updateParticlePositionsForDelta(currentCollision.getDelta());
 
-        List<CollisionInformation> conflictingCollisions = this.collisions.stream()
-                .filter(c -> c.getFirstParticleId() == firstId
-                        || c.getFirstParticleId() == secondId
-                        || c.getSecondParticleId() == firstId
-                        || c.getSecondParticleId() == secondId)
-                .collect(Collectors.toList());
+        // Updating the velocities for the collided particles
+        this.updateCollidedParticlesVelocity(currentCollision);
 
-        for (CollisionInformation oldCollision : conflictingCollisions) {
-            this.collisions.remove(oldCollision);
+        // Incrementing the elapsed time
+        this.elapsedTime += currentCollision.getDelta();
+
+        Particle current, other;
+        int n = this.particles.size();
+
+        // Check if it's not a wall
+        if (currentCollision.firstParticleId >= 0){
+            // Get the particle to have it's collisions recalculated
+            current = this.particles.get(currentCollision.firstParticleId);
+
+            // Calculate the new collisions
+            for (int index = 0; index < n; index++){
+                if (index != currentCollision.firstParticleId){
+                    other = this.particles.get(index);
+                    collisions.add(new CollisionInformation(current.getId(), other.getId(), current.calculateCollisionDelta(other)));
+                }
+            }
+
+            // Compare to the walls
+            for (int wall : WALLS){
+                collisions.add(new CollisionInformation(current.getId(), wall, current.calculateCollisionDelta(wall, this.areaLength)));
+            }
         }
 
-        this.calculateCollisionForParticle(this.particles.get(firstId));
-        this.calculateCollisionForParticle(this.particles.get(secondId));
+        // Check if not a wall
+        if (currentCollision.secondParticleId >= 0){
+            // Get the particle to have it's collisions recalculated
+            current = this.particles.get(currentCollision.secondParticleId);
+
+            // Calculate the new collisions
+            for (int index = 0; index < n; index++){
+                if (index != currentCollision.secondParticleId && index != currentCollision.firstParticleId){
+                    other = this.particles.get(index);
+                    collisions.add(new CollisionInformation(current.getId(), other.getId(), current.calculateCollisionDelta(other)));
+                }
+            }
+
+            // Compare to the walls
+            for (int wall : WALLS){
+                collisions.add(new CollisionInformation(current.getId(), wall, current.calculateCollisionDelta(wall, this.areaLength)));
+            }
+        }
+
+        return this.particles.values();
     }
 
-    public void calculateCollisionForParticle(final Particle current) {
-        /*
-        IDs of the particles involved in collisions, convention is that if it is a wall, the second id is negative
-        Convention for ids:
-         - -1 -> top wall
-         - -2 -> right wall
-         - -3 -> bottom wall
-         - -4 -> left wall
-        */
-        List<Particle> otherParticles = this.particles.entrySet().stream()
-                .filter(e -> e.getKey() != current.getId())
-                .map(Map.Entry::getValue)
-                .collect(Collectors.toList());
-
-
-        for (Particle other : otherParticles) {
-            collisions.add(new CollisionInformation(current.getId(), other.getId(), current.calculateCollisionDelta(other)));
+    /**
+     * Check if given the CollisionInformation, the main particle has hit the wall
+     * @param c Collision information
+     */
+    private void checkIfMainHitWall(CollisionInformation c){
+        if (c.firstParticleId == 0 || c.secondParticleId == 0){
+            if (c.firstParticleId < 0 || c.secondParticleId < 0){
+                this.mainHasHitWall = true;
+            }
         }
-        // Compare to the walls
-        for (int wall : WALLS){
-            collisions.add(new CollisionInformation(current.getId(), wall, current.calculateCollisionDelta(wall, this.areaLength)));
-        }
+    }
+
+    public double getElapsedTime() {
+        return elapsedTime;
+    }
+
+    public boolean isMainHasHitWall() {
+        return mainHasHitWall;
     }
 
     /**
@@ -129,25 +164,12 @@ public class BrownianMotion {
     public static class CollisionInformation implements Comparable<CollisionInformation> {
         private final int firstParticleId;
         private final int secondParticleId;
-        private final double delta;
+        private double delta;
 
         public CollisionInformation(int firstParticleId, int secondParticleId, double delta) {
-            if (firstParticleId < secondParticleId) {
-                this.firstParticleId = firstParticleId;
-                this.secondParticleId = secondParticleId;
-            } else {
-                this.firstParticleId = secondParticleId;
-                this.secondParticleId = firstParticleId;
-            }
+            this.firstParticleId = Math.min(firstParticleId, secondParticleId);
+            this.secondParticleId = Math.max(firstParticleId, secondParticleId);
             this.delta = delta;
-        }
-
-        public int getFirstParticleId() {
-            return firstParticleId;
-        }
-
-        public int getSecondParticleId() {
-            return secondParticleId;
         }
 
         public double getDelta() {
@@ -155,11 +177,22 @@ public class BrownianMotion {
         }
 
         @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            CollisionInformation that = (CollisionInformation) o;
+            return firstParticleId == that.firstParticleId &&
+                    secondParticleId == that.secondParticleId;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(firstParticleId, secondParticleId);
+        }
+
+        @Override
         public int compareTo(CollisionInformation collision) {
-            double difference = this.delta - collision.getDelta();
-            if (difference > 0) return 1;
-            if (difference < 0) return -1;
-            return 0;
+            return Double.compare(this.delta, collision.delta);
         }
     }
 }

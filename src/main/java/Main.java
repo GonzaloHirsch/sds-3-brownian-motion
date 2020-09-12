@@ -31,14 +31,22 @@ public class Main {
         // Creating the brownian motion instance
         BrownianMotion bm = new BrownianMotion(ConfigurationParser.areaLength, ConfigurationParser.particles);
 
+        // Variable for output particles
         Collection<Particle> stepOutput;
 
-        // FIXME: DETERMINAR LA CANTIDAD DE PASOS
-        for(int i = 0; i < 100; i++){
-            // Simulate the step
+        // Variables for the iteration
+        double limitTime = 100;
+        double currentTime = 0;
+        boolean mainHitWall = false;
+
+        // Simulating multiple steps
+        while (currentTime < limitTime && !mainHitWall){
             stepOutput = bm.simulateUntilCollision();
 
-            // Write to the file
+            // Write the output
+
+            currentTime = bm.getElapsedTime();
+            mainHitWall = bm.isMainHasHitWall();
         }
 
         //AddToEvolutionStatisticsFile(ConfigurationParser.is2D, ConfigurationParser.livingLimitedPercentage, OptionsParser.ruleSet, livingVsTime, LIVING_PERCENT_FILE);
