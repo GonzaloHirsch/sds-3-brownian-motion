@@ -147,25 +147,25 @@ public class Particle implements Comparable<Particle> {
                 if (this.vy <= 0){
                     return Double.MAX_VALUE;
                 } else {
-                    return (areaLength - this.radius - this.vy)/this.y;
+                    return (areaLength - this.radius - this.y)/this.vy;
                 }
             case -2:
                 if (this.vx <= 0){
                     return Double.MAX_VALUE;
                 } else {
-                    return (areaLength - this.radius - this.vx)/this.x;
+                    return (areaLength - this.radius - this.x)/this.vx;
                 }
             case -3:
                 if (this.vy >= 0){
                     return Double.MAX_VALUE;
                 } else {
-                    return (this.radius - this.vy)/this.y;
+                    return (this.radius - this.y)/this.vy;
                 }
             case -4:
                 if (this.vx >= 0){
                     return Double.MAX_VALUE;
                 } else {
-                    return (this.radius - this.vx)/this.x;
+                    return (this.radius - this.x)/this.vx;
                 }
             default:
                 return Double.MAX_VALUE;
