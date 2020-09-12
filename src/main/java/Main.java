@@ -42,7 +42,7 @@ public class Main {
 
             // Updating the variables for conditions
             currentTime = bm.getElapsedTime();
-            mainHitWall = bm.isMainHasHitWall();
+            mainHitWall = bm.mainHasHitWall();
 
             // Write the output
             GenerateOutputFile(stepOutput, currentTime);

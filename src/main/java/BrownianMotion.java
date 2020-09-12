@@ -164,7 +164,7 @@ public class BrownianMotion {
         return elapsedTime;
     }
 
-    public boolean isMainHasHitWall() {
+    public boolean mainHasHitWall() {
         return mainHasHitWall;
     }
 

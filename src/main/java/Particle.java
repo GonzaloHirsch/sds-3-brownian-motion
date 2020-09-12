@@ -166,29 +166,13 @@ public class Particle implements Comparable<Particle> {
     public double calculateCollisionDelta(int wallIndex, double areaLength){
         switch (wallIndex){
             case Constant.TOP_WALL_INDEX:
-                if (this.vy <= 0){
-                    return Double.MAX_VALUE;
-                } else {
-                    return (areaLength - this.radius - this.y)/this.vy;
-                }
+                return this.vy <= 0 ? Double.MAX_VALUE : (areaLength - this.radius - this.y)/this.vy;
             case Constant.RIGHT_WALL_INDEX:
-                if (this.vx <= 0){
-                    return Double.MAX_VALUE;
-                } else {
-                    return (areaLength - this.radius - this.x)/this.vx;
-                }
-            case -3:
-                if (this.vy >= 0){
-                    return Double.MAX_VALUE;
-                } else {
-                    return (this.radius - this.y)/this.vy;
-                }
+                return this.vx <= 0 ? Double.MAX_VALUE : (areaLength - this.radius - this.x)/this.vx;
+            case Constant.BOTTOM_WALL_INDEX:
+                return this.vy >= 0 ? Double.MAX_VALUE : (this.radius - this.y)/this.vy;
             case Constant.LEFT_WALL_INDEX:
-                if (this.vx >= 0){
-                    return Double.MAX_VALUE;
-                } else {
-                    return (this.radius - this.x)/this.vx;
-                }
+                return this.vx >= 0 ? Double.MAX_VALUE : (this.radius - this.x)/this.vx;
             default:
                 return Double.MAX_VALUE;
         }
@@ -209,6 +193,26 @@ public class Particle implements Comparable<Particle> {
     }
 
     public void calculateParticleCollisionVelocity(Particle p) {
+        // Calculating deltaV and deltaR
+        double dvx = this.vx - p.getVx();
+        double dvy = this.vy - p.getVy();
+        double dx = this.x - p.getX();
+        double dy = this.y - p.getY();
 
+        double sigma = this.radius + p.getRadius();
+
+        // Calculating dot product
+        double dotdvdr = dvx * dx + dvy * dy;
+        // Calculate impulse conservation (Jx, Jy)
+        double J = (2 * this.mass * p.getMass() * dotdvdr) / sigma * (this.mass + p.getMass());
+        double Jx = J * dx / sigma;
+        double Jy = J * dy / sigma;
+
+        // Updating this particle's velocity
+        this.vx = this.vx + Jx / this.mass;
+        this.vy = this.vy + Jy / this.mass;
+        // Updating other particles velocity
+        p.setVx(p.getVx() + Jx / p.getMass());
+        p.setVy(p.getVy() + Jy / p.getMass());
     }
 }
