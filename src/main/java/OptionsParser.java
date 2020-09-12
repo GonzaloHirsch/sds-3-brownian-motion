@@ -2,13 +2,11 @@ import org.apache.commons.cli.*;
 
 // TODO: HACER ESTO Y DEFINIR OPCIONES
 public class OptionsParser {
-    protected static Integer timeInterval = 100;
+    protected static double maxTime = 100;
     protected static String staticFile;
     protected static String dynamicFile;
 
     private static final String PARAM_T = "t";
-    private static final String PARAM_R = "r";
-    private static final String PARAM_H = "h";
     private static final String PARAM_SF = "sf";
     private static final String PARAM_DF = "df";
 
@@ -19,19 +17,12 @@ public class OptionsParser {
      */
     private static Options GenerateOptions() {
         Options options = new Options();
-        options.addOption(PARAM_H, "help", false, "Shows the system help.");
-        options.addOption(PARAM_T, "time_iteration", true, "Amount of iterations (or time) to run the Game Of Life for.");
-        options.addOption(PARAM_R, "rule_set", true, "Id of the rule set to apply to the Game Of Life");
+        options.addOption(PARAM_T, "max_time", true, "Maximum time to be considered");
         options.addOption(PARAM_SF, "static_file", true, "Path to the file with the static values.");
         options.addOption(PARAM_DF, "dynamic_file", true, "Path to the file with the dynamic values.");
         return options;
     }
 
-    /**
-     * Public
-     *
-     * @param args
-     */
     public static void ParseOptions(String[] args) {
         // Generating the options
         Options options = GenerateOptions();
@@ -43,18 +34,13 @@ public class OptionsParser {
             // Parsing the options
             CommandLine cmd = parser.parse(options, args);
 
-            // Parsing the help
-            if (cmd.hasOption(PARAM_H)){
-                help(options);
-            }
-
             // Checking if the time amount is present
             if (!cmd.hasOption(PARAM_T)){
-                System.out.println("A time frame amount must be specified");
+                System.out.println("A maximum time must be specified");
                 System.exit(1);
             }
             // Retrieving the amount of "time" to iterate with
-            timeInterval = Integer.parseInt(cmd.getOptionValue(PARAM_T));
+            maxTime = Integer.parseInt(cmd.getOptionValue(PARAM_T));
 
             // Checking if the files were present
             if (!cmd.hasOption(PARAM_SF) | !cmd.hasOption(PARAM_DF)){

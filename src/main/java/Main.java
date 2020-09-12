@@ -1,3 +1,5 @@
+import com.sun.xml.internal.ws.wsdl.writer.document.Part;
+
 import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
@@ -10,12 +12,6 @@ import java.util.Collection;
 import java.util.List;
 
 public class Main {
-    private final static String STAT_FILE = "./parsable_files/statistics.txt";
-    private final static String RADIUS_FILE = "./parsable_files/radius_vs_time.txt";
-    private final static String LIVING_PERCENT_FILE = "./parsable_files/living_percent_vs_time.txt";
-    private final static String LIVING_STATS = "Living";
-    private final static String DISPLACEMENT_STATS = "Displacement";
-
     public static void main(String[] args) {
         // Parsing the options
         OptionsParser.ParseOptions(args);
@@ -35,37 +31,36 @@ public class Main {
         Collection<Particle> stepOutput;
 
         // Variables for the iteration
-        double limitTime = 100;
+        double limitTime = OptionsParser.maxTime;
         double currentTime = 0;
         boolean mainHitWall = false;
 
         // Simulating multiple steps
         while (currentTime < limitTime && !mainHitWall){
+            // Step simulation
             stepOutput = bm.simulateUntilCollision();
 
-            // Write the output
-
+            // Updating the variables for conditions
             currentTime = bm.getElapsedTime();
             mainHitWall = bm.isMainHasHitWall();
+
+            // Write the output
+            GenerateOutputFile(stepOutput, currentTime);
         }
 
         //AddToEvolutionStatisticsFile(ConfigurationParser.is2D, ConfigurationParser.livingLimitedPercentage, OptionsParser.ruleSet, livingVsTime, LIVING_PERCENT_FILE);
         //AddToEvolutionStatisticsFile(ConfigurationParser.is2D, ConfigurationParser.livingLimitedPercentage, OptionsParser.ruleSet, radiusVsTime, RADIUS_FILE);
     }
 
-    private static void GenerateOutputFile(List<int[]> cells, int iteration) {
+    private static void GenerateOutputFile(Collection<Particle> particles, double time) {
         try {
             BufferedWriter bf = new BufferedWriter(new FileWriter(OptionsParser.dynamicFile, true));
-            bf.append(String.format("%d\n", iteration));
+            bf.append(String.format("%f\n", time));
 
             // Creating the output for the file
-            cells.forEach(cell -> {
+            particles.forEach(p -> {
                 try {
-                    if (cell.length == 3) {
-                        bf.append(String.format("%d %d %d\n", cell[0], cell[1], cell[2]));
-                    } else {
-                        bf.append(String.format("%d %d\n", cell[0], cell[1]));
-                    }
+                    bf.append(String.format("%f %f %f %f\n", p.getX(), p.getY(), p.getVx(), p.getVy()));
                 } catch (IOException e) {
                     System.out.println("Error writing to the output file");
                 }

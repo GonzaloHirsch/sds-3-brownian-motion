@@ -8,6 +8,9 @@ public class BrownianMotion {
     private TreeSet<CollisionInformation> collisions = new TreeSet<>();
     private final double areaLength;
 
+    private double elapsedTime = 0;
+    private boolean mainHasHitWall = false;
+
     private static final int[] WALLS = new int[]{Constant.TOP_WALL_INDEX, Constant.RIGHT_WALL_INDEX, Constant.BOTTOM_WALL_INDEX, Constant.LEFT_WALL_INDEX};
 
     public BrownianMotion(final double areaLength, final Map<Integer, Particle> particles){
@@ -33,6 +36,13 @@ public class BrownianMotion {
      * @param information for the collision, as returned by the computing algorithm
      */
     private void updateCollidedParticlesVelocity(CollisionInformation information){
+        if (information.firstParticleId >= 0){
+
+        }
+
+        if (information.secondParticleId >= 0){
+            
+        }
         // TODO: HACER ESTO
     }
 
