@@ -151,7 +151,7 @@ def main():
     args = parser.parse_args()
 
     # Validations
-    if int(args.particle_number) <= 100 or int(args.particle_number) >= 150:
+    if int(args.particle_number) >= 150:
         raise Exception("Particle number, must be 100 < N < 150")
 
     if float(args.small_radius) >= float(args.big_radius):

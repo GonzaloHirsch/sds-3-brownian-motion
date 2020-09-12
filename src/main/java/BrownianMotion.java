@@ -68,13 +68,14 @@ public class BrownianMotion {
             for (int sub_index = index + 1; sub_index < n; sub_index++) {
                 other = this.particles.get(sub_index);
 
+                CollisionInformation ci = new CollisionInformation(current.getId(), other.getId(), current.calculateCollisionDelta(other));
                 // Computing the collision
-                collisions.add(new CollisionInformation(current.getId(), other.getId(), current.calculateCollisionDelta(other)));
+                this.collisions.add(ci);
             }
 
             // Compare to the walls
             for (int wall : WALLS) {
-                collisions.add(new CollisionInformation(current.getId(), wall, current.calculateCollisionDelta(wall, this.areaLength)));
+                this.collisions.add(new CollisionInformation(current.getId(), wall, current.calculateCollisionDelta(wall, this.areaLength)));
             }
         }
     }
@@ -212,12 +213,17 @@ public class BrownianMotion {
 
         @Override
         public int hashCode() {
-            return Objects.hash(firstParticleId, secondParticleId);
+            return this.firstParticleId * 31 + this.secondParticleId;
         }
 
         @Override
         public int compareTo(CollisionInformation collision) {
-            return Double.compare(this.delta, collision.delta);
+            int deltaDifference = Double.compare(this.delta, collision.delta);
+            if (deltaDifference == 0) {
+                int first = Integer.compare(this.firstParticleId, collision.firstParticleId);
+                return first == 0 ? Integer.compare(this.secondParticleId, collision.secondParticleId) : first;
+            }
+            return deltaDifference;
         }
     }
 }
