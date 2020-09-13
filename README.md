@@ -21,7 +21,13 @@ Where:
 ## Simulation
 To run the simulation, the command is:
 ```
-java -jar ./target/sds-tp3-1.0-SNAPSHOT-jar-with-dependencies.jar -sf ./parsable_files/static.txt -df ./parsable_files/dynamic.txt -t 50
+java -jar ./target/sds-tp3-1.0-SNAPSHOT-jar-with-dependencies.jar -sf ./parsable_files/static.txt -df ./parsable_files/dynamic.txt -t 100
+```
+
+## Post Processing
+Post processing is used to generate the XYZ file for the animation, it can be run like this:
+```
+python3 visualization/postprocess.py -t 0.1
 ```
 
 ## Ovito Configuration
