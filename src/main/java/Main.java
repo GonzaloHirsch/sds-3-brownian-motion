@@ -2,10 +2,13 @@ import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Collection;
 
 public class Main {
     public static void main(String[] args) {
+        long startTime = Instant.now().toEpochMilli();
+
         // Parsing the options
         OptionsParser.ParseOptions(args);
 
@@ -39,6 +42,16 @@ public class Main {
 
             // Write the output
             GenerateOutputFile(stepOutput, currentTime);
+        }
+
+        long endTime = Instant.now().toEpochMilli();
+
+        long total = endTime - startTime;
+
+        if (mainHitWall){
+            System.out.format("Total Time %d millis - Main particle wall collision\n", total);
+        } else {
+            System.out.format("Total Time %d millis - Time limit of %d reached\n", total, limitTime);
         }
 
         //AddToEvolutionStatisticsFile(ConfigurationParser.is2D, ConfigurationParser.livingLimitedPercentage, OptionsParser.ruleSet, livingVsTime, LIVING_PERCENT_FILE);
