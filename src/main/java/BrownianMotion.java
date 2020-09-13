@@ -1,7 +1,4 @@
-import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class BrownianMotion {
@@ -92,19 +89,25 @@ public class BrownianMotion {
         // Check if the collision was for the main particle
         this.checkIfMainHitWall(currentCollision);
 
+        List<CollisionInformation> removeCollisions;
+
         // Remove the unwanted collisions
         if (currentCollision.firstParticleId < 0 && currentCollision.secondParticleId >= 0){
-            this.collisions = this.collisions.stream().filter(
-                    c -> c.firstParticleId != currentCollision.secondParticleId
-                            && c.secondParticleId != currentCollision.secondParticleId)
-                    .collect(Collectors.toCollection(TreeSet::new));
+            removeCollisions = this.collisions.stream().filter(
+                    c -> c.firstParticleId == currentCollision.secondParticleId
+                            || c.secondParticleId == currentCollision.secondParticleId)
+                    .collect(Collectors.toList());
         } else {
-            this.collisions = this.collisions.stream().filter(
-                    c -> c.firstParticleId != currentCollision.firstParticleId
-                            && c.firstParticleId != currentCollision.secondParticleId
-                            && c.secondParticleId != currentCollision.firstParticleId
-                            && c.secondParticleId != currentCollision.secondParticleId)
-                    .collect(Collectors.toCollection(TreeSet::new));
+            removeCollisions = this.collisions.stream().filter(
+                    c -> c.firstParticleId == currentCollision.firstParticleId
+                            || c.firstParticleId == currentCollision.secondParticleId
+                            || c.secondParticleId == currentCollision.firstParticleId
+                            || c.secondParticleId == currentCollision.secondParticleId)
+                    .collect(Collectors.toList());
+        }
+
+        for (CollisionInformation oldCollision : removeCollisions) {
+            this.collisions.remove(oldCollision);
         }
 
         // Updating the deltas for each remaining collision

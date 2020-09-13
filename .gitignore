@@ -76,3 +76,5 @@ fabric.properties
 target/
 
 parsable_files/
+
+visualization/configuration.ovito
