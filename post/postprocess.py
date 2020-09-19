@@ -13,7 +13,8 @@ from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
 
 COLLISION_FREQUENCY = "cf"
 COLLISION_PROBABILITY = "cp"
-TRAJECTORY = "tr"
+TRAJECTORY_ONE = "tro"
+TRAJECTORY_MULTIPLE = "trm"
 
 def compute_collision_frequency(filename, outfilename):
     f = open(filename, 'r')
@@ -83,7 +84,7 @@ def compute_collision_probability(filename, outfilename):
     plt.gca().xaxis.set_minor_locator(MultipleLocator(0.0005))
     plt.show()
 
-def compute_trajectory(dynamic_filename, static_filename):
+def compute_trajectory_one(dynamic_filename, static_filename):
     f = open(dynamic_filename, 'r')
 
     points_x = []
@@ -134,6 +135,101 @@ def compute_trajectory(dynamic_filename, static_filename):
     plt.ylim(radius, area_length - radius)
     plt.show()
 
+def compute_trajectory_multiple(dynamic_filename, dynamic_slower_filename, dynamic_faster_filename, static_filename):
+    f = open(static_filename, 'r')
+
+    area_length = 0
+    radius = 0
+    index = 0
+
+    for line in f:
+        data = line.rstrip("\n").split(" ")
+        if index == 0:
+            area_length = float(data[0])
+        elif index == 1:
+            radius = float(data[1])
+            break
+        index += 1
+
+    f.close()
+
+    f = open(dynamic_filename, 'r')
+
+    points_x = []
+    points_y = []
+
+    isFirst = True
+
+    for line in f:
+        data = line.rstrip("\n").split(" ")
+        if len(data) == 1:
+            current_time = float(data[0])
+            isFirst = True
+        else:
+            if isFirst:
+                isFirst = False
+                points_x.append(float(data[0]))
+                points_y.append(float(data[1]))
+
+    f.close()
+
+    f = open(dynamic_slower_filename, 'r')
+
+    points_x_slower = []
+    points_y_slower = []
+
+    isFirst = True
+
+    for line in f:
+        data = line.rstrip("\n").split(" ")
+        if len(data) == 1:
+            current_time = float(data[0])
+            isFirst = True
+        else:
+            if isFirst:
+                isFirst = False
+                points_x_slower.append(float(data[0]))
+                points_y_slower.append(float(data[1]))
+
+    f.close()
+
+    f = open(dynamic_faster_filename, 'r')
+
+    points_x_faster = []
+    points_y_faster = []
+
+    isFirst = True
+
+    for line in f:
+        data = line.rstrip("\n").split(" ")
+        if len(data) == 1:
+            current_time = float(data[0])
+            isFirst = True
+        else:
+            if isFirst:
+                isFirst = False
+                points_x_faster.append(float(data[0]))
+                points_y_faster.append(float(data[1]))
+
+    f.close()
+
+    plt.plot(points_x, points_y, 'r', label = "Trayectoria Normal")
+    plt.plot(points_x_slower, points_y_slower, 'g', label = "Trayectoria con menos Velocidad")
+    plt.plot(points_x_faster, points_y_faster, 'b', label = "Trayectoria con más Velocidad")
+    plt.plot(points_x[0], points_y[0], 'go', label = "Inicio")
+    plt.plot(points_x[-1], points_y[-1], 'ko', label = "Fin Normal")
+    plt.plot(points_x_slower[-1], points_y_slower[-1], 'kx', label = "Fin con menos Velocidad")
+    plt.plot(points_x_faster[-1], points_y_faster[-1], 'k*', label = "Fin con más Velocidad")
+    plt.legend()
+    plt.gca().set_aspect('equal', adjustable='box')
+    plt.gca().xaxis.set_minor_locator(MultipleLocator(0.1))
+    plt.gca().yaxis.set_minor_locator(MultipleLocator(0.1))
+    plt.gca().set_xlabel('Posición X')
+    plt.gca().set_ylabel('Posición Y')
+    plt.xlim(radius, area_length - radius)
+    plt.ylim(radius, area_length - radius)
+    plt.show()
+
 # main() function
 def main():
     # Command line args are in sys.argv[1], sys.argv[2] ..
@@ -154,9 +250,12 @@ def main():
     elif args.process_type == COLLISION_PROBABILITY:
         print("Computing collision probability...")
         compute_collision_probability('./parsable_files/dynamic.txt', './parsable_files/collision_frequency.txt')
-    elif args.process_type == TRAJECTORY:
+    elif args.process_type == TRAJECTORY_ONE:
         print("Computing trajectory...")
-        compute_trajectory('./parsable_files/dynamic.txt', './parsable_files/static.txt')
+        compute_trajectory_one('./parsable_files/dynamic.txt', './parsable_files/static.txt')
+    elif args.process_type == TRAJECTORY_MULTIPLE:
+        print("Computing trajectory...")
+        compute_trajectory_multiple('./parsable_files/dynamic.txt', './parsable_files/dynamic_slower.txt',  './parsable_files/dynamic_faster.txt', './parsable_files/static.txt')
 
 
 # call main
