@@ -49,13 +49,10 @@ public class Main {
         long total = endTime - startTime;
 
         if (mainHitWall){
-            System.out.format("Total Time %d millis - Main particle wall collision\n", total);
+            System.out.format("Total Time %d millis - Main particle wall collision in %f seconds\n", total, currentTime);
         } else {
-            System.out.format("Total Time %d millis - Time limit of %d reached\n", total, limitTime);
+            System.out.format("Total Time %d millis - Time limit of %f reached\n", total, limitTime);
         }
-
-        //AddToEvolutionStatisticsFile(ConfigurationParser.is2D, ConfigurationParser.livingLimitedPercentage, OptionsParser.ruleSet, livingVsTime, LIVING_PERCENT_FILE);
-        //AddToEvolutionStatisticsFile(ConfigurationParser.is2D, ConfigurationParser.livingLimitedPercentage, OptionsParser.ruleSet, radiusVsTime, RADIUS_FILE);
     }
 
     private static void GenerateOutputFile(Collection<Particle> particles, double time) {
@@ -65,8 +62,9 @@ public class Main {
 
             // Creating the output for the file
             particles.forEach(p -> {
+                String line = p.getX() + " " + p.getY() + " " + p.getVx() + " " + p.getVy() + "\n";
                 try {
-                    bf.append(String.format("%f %f %f %f\n", p.getX(), p.getY(), p.getVx(), p.getVy()));
+                    bf.append(line);
                 } catch (IOException e) {
                     System.out.println("Error writing to the output file");
                 }
@@ -79,26 +77,5 @@ public class Main {
             System.out.println("Error writing to the output file");
         }
     }
-
-    /**
-     * Generates the evolution vs time statistics file
-     *
-     * @param evolution Data of living cell % or maximum displacement based on time
-     */
-   /* private static void AddToEvolutionStatisticsFile(boolean is2D, double initialPercentage, RuleSet rule, List<Double> evolution, String file) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(String.format("%d %.3f %d", is2D ? 2 : 3, initialPercentage, rule.getRuleId()));
-        for (Double aDouble : evolution) {
-            sb.append(String.format(" %.3f", aDouble));
-        }
-        sb.append("\n");
-        try {
-            Files.write(Paths.get(file), sb.toString().getBytes(), StandardOpenOption.APPEND);
-        } catch (FileNotFoundException e) {
-            System.out.println(file + " not found");
-        } catch (IOException e) {
-            System.out.println("Error writing to the statistics file: " + file);
-        }
-    }*/
 }
 

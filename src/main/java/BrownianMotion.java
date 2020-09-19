@@ -111,7 +111,7 @@ public class BrownianMotion {
         }
 
         // Updating the deltas for each remaining collision
-        this.collisions.forEach(c -> c.delta -= currentCollision.delta);
+        this.collisions.stream().forEach(c -> c.delta -= currentCollision.delta);
 
         // Updating the particle positions for a given delta
         this.updateParticlePositionsForDelta(currentCollision.getDelta());

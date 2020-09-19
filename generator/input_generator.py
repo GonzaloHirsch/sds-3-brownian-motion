@@ -110,27 +110,10 @@ def generate_dynamic_file(filename, points):
         f.write('{} {} {} {}\n'.format(point[0], point[1], point[2], point[3]))
 
     f.close()
-
-def generate_animation_file(filename, points):
-    f = open(filename, 'w')
-
-    # We provide only the dynamic configuration at time 0
-    f.write('{}\n'.format(len(points)))
-
-    # We provide only the dynamic configuration at time 0
-    f.write('0\n')
-
-    # Adding the randomly generated
-    for point in points:
-        f.write('{}\t{}\t{}\t{}\t{}\t{}\n'.format(point[4], point[5], point[0], point[1], point[2], point[3]))
-
-    f.close()
-
 # Generates both the dynamic and the static file
 def generate_files(area_length, points):
     generate_static_file('./parsable_files/static.txt', area_length, points)
     generate_dynamic_file('./parsable_files/dynamic.txt', points)
-    generate_animation_file('./parsable_files/animation.xyz', points)
 
 # main() function
 def main():
@@ -152,7 +135,7 @@ def main():
 
     # Validations
     if int(args.particle_number) >= 150:
-        raise Exception("Particle number, must be 100 < N < 150")
+        raise Exception("Particle number, must be N < 150")
 
     if float(args.small_radius) >= float(args.big_radius):
         raise Exception("Big radius must be bigger than small radius")
