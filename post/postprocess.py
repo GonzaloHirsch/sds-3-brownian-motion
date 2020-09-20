@@ -17,6 +17,7 @@ VELOCITY_PROBABILITY = "vp"
 VELOCITY_PROBABILITY_T0 = "vp0"
 TRAJECTORY_ONE = "tro"
 TRAJECTORY_MULTIPLE = "trm"
+MSD = "msd"
 
 def compute_collision_frequency(filename, outfilename):
     f = open(filename, 'r')
@@ -84,13 +85,9 @@ def compute_collision_probability(filename, outfilename):
     plt.gca().xaxis.set_minor_locator(MultipleLocator(0.0005))
     plt.show()
 
-
-def compute_velocity_probability(filename):
+def compute_max_time(filename):
     f = open(filename, 'r')
 
-    velocity_modules = []
-
-    current_time = 0
     time = 0
     for line in f:
         data = line.rstrip("\n").split(" ")
@@ -98,10 +95,16 @@ def compute_velocity_probability(filename):
             # Saving the last time to know the length of the simulation
             time = float(data[0])
 
-    # Getting the last third of the time of the simulation
-    time = time * (2/3)
-
     f.close()
+    return time
+
+
+def compute_velocity_probability(filename):
+    time = (2/3) * compute_max_time(filename)
+    velocity_modules = []
+
+    current_time = 0
+
     f = open(filename, 'r')
 
     for line in f:
@@ -293,6 +296,91 @@ def compute_trajectory_multiple(dynamic_filename, dynamic_slower_filename, dynam
     plt.ylim(radius, area_length - radius)
     plt.show()
 
+
+def generate_msd_frames(filename, clock_time, start_time):
+    f = open(filename, 'r')
+
+    processed_iterations = {}
+    processed_times = []
+    skip = True
+
+    for line in f:
+        data = line.rstrip("\n").split(" ")
+        if len(data) == 1:
+            time = float(data[0])
+            if (time >= start_time):
+                processed_iterations[time] = []
+                processed_times.append(time)
+                skip = False
+        else:
+            if not skip:
+                point = [float(x) for x in data]
+                processed_iterations[time].append(point)
+
+    f.close()
+
+    chosen_times = []
+
+    # Add the first one
+    chosen_times.append(processed_iterations[processed_times[0]])
+
+    clock_current = start_time + clock_time
+
+    for t in processed_times:
+        if t >= clock_current:
+            chosen_times.append(processed_iterations[t])
+            clock_current += clock_time
+            if clock_current > 50:
+                break
+
+    return chosen_times
+
+def parse_static_file(filename):
+    f = open(filename, 'r')
+
+    index = 0
+    length = 0
+
+    for line in f:
+        data = line.rstrip("\n").split(" ")
+        if index == 0:
+            length = float(data[0])
+        index += 1
+
+    f.close()
+
+    return length, index-1
+
+def compute_msd_for_run(input_filename, static_file, output_filename):
+    total_time = compute_max_time(input_filename)
+
+    # Only want to consider the simulations with time longer than 50 seconds
+    if total_time < 50:
+        return
+
+    L, N = parse_static_file(static_file)
+
+    start_time = 25.0
+    clock_time = start_time/10.0
+    chosen_frames = generate_msd_frames(input_filename, clock_time, start_time)
+
+    msd_stats = []
+    for frame in chosen_frames:
+        particle = frame[0]
+        x_displ = (particle[0] - L/2)**2
+        y_displ = (particle[1] - L/2)**2
+        msd_stats.append(x_displ + y_displ)
+
+    output = open(output_filename, 'a')
+
+    output.write('{}\t'.format(N))
+    for msd in msd_stats:
+        output.write('{}\t'.format(msd))
+    output.write('\n')
+
+    output.close()
+
+
 # main() function
 def main():
     # Command line args are in sys.argv[1], sys.argv[2] ..
@@ -325,6 +413,9 @@ def main():
     elif args.process_type == VELOCITY_PROBABILITY_T0:
         print("Computing velocity probability...")
         compute_velocity_probability_at_t0('./parsable_files/dynamic.txt')
+    elif args.process_type == MSD:
+        print("Computing MSD of a particle...")
+        compute_msd_for_run('./parsable_files/dynamic.txt', './parsable_files/static.txt', './parsable_files/msd_stats.txt')
 
 
 # call main
