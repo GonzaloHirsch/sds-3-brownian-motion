@@ -75,11 +75,7 @@ def compute_collision_probability(filename, outfilename):
 
     print("THE AVERAGE TIMESPAN IS", span_average)
 
-    truncated_spans = [round(x, 4) for x in collision_timespans]
-
-    print("MIN", min(truncated_spans), "MAX", max(truncated_spans))
-
-    plt.hist(truncated_spans, bins=np.arange(min(truncated_spans), max(truncated_spans) + 0.0005, 0.0005))
+    p = plt.hist(collision_timespans, bins=np.arange(min(collision_timespans), max(collision_timespans) + 0.0005, 0.0005), density=True)
     plt.gca().xaxis.set_major_formatter(mtick.FormatStrFormatter('%.3f'))
     plt.gca().xaxis.set_minor_locator(MultipleLocator(0.0005))
     plt.show()
