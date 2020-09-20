@@ -13,6 +13,7 @@ from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
 
 COLLISION_FREQUENCY = "cf"
 COLLISION_PROBABILITY = "cp"
+VELOCITY_PROBABILITY = "vp"
 TRAJECTORY_ONE = "tro"
 TRAJECTORY_MULTIPLE = "trm"
 
@@ -83,6 +84,45 @@ def compute_collision_probability(filename, outfilename):
     plt.gca().xaxis.set_major_formatter(mtick.FormatStrFormatter('%.3f'))
     plt.gca().xaxis.set_minor_locator(MultipleLocator(0.0005))
     plt.show()
+
+
+def compute_velocity_probability(filename):
+    f = open(filename, 'r')
+
+    velocity_modules = []
+
+    current_time = 0
+    time = 0
+    for line in f:
+        data = line.rstrip("\n").split(" ")
+        if len(data) == 1:
+            # Saving the last time to know the length of the simulation
+            time = float(data[0])
+
+    # Getting the last third of the time of the simulation
+    time = time * (2/3)
+
+    f.close()
+    f = open(filename, 'r')
+
+    for line in f:
+        data = line.rstrip("\n").split(" ")
+        if len(data) == 1:
+            current_time = float(data[0])
+        if len(data) > 1:
+            if current_time > time:
+                x_velocity = float(data[2])
+                y_velocity = float(data[3])
+                velocity_modules.append((x_velocity**2 + y_velocity**2)**(1/2))
+    f.close()
+
+    weights = np.ones_like(velocity_modules) / len(velocity_modules)
+    plt.hist(velocity_modules, bins=np.arange(min(velocity_modules), max(velocity_modules) + 0.25, 0.25), weights=weights)
+    #plt.gca().xaxis.set_major_formatter(mtick.FormatStrFormatter('%.3f'))
+    plt.gca().xaxis.set_minor_locator(MultipleLocator(0.25))
+    plt.show()
+
+
 
 def compute_trajectory_one(dynamic_filename, static_filename):
     f = open(dynamic_filename, 'r')
@@ -256,6 +296,9 @@ def main():
     elif args.process_type == TRAJECTORY_MULTIPLE:
         print("Computing trajectory...")
         compute_trajectory_multiple('./parsable_files/dynamic.txt', './parsable_files/dynamic_slower.txt',  './parsable_files/dynamic_faster.txt', './parsable_files/static.txt')
+    elif args.process_type == VELOCITY_PROBABILITY:
+        print("Computing velocity probability...")
+        compute_velocity_probability('./parsable_files/dynamic.txt')
 
 
 # call main
