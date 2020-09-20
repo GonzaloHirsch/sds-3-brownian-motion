@@ -116,7 +116,30 @@ def compute_velocity_probability(filename):
 
     weights = np.ones_like(velocity_modules) / len(velocity_modules)
     plt.hist(velocity_modules, bins=np.arange(min(velocity_modules), max(velocity_modules) + 0.25, 0.25), weights=weights)
-    #plt.gca().xaxis.set_major_formatter(mtick.FormatStrFormatter('%.3f'))
+    plt.gca().xaxis.set_minor_locator(MultipleLocator(0.25))
+    plt.show()
+
+def compute_velocity_probability_at_t0(filename):
+    f = open(filename, 'r')
+
+    velocity_modules = []
+    time = -1
+
+    for line in f:
+        data = line.rstrip("\n").split(" ")
+        if len(data) == 1:
+            if time >= 0:
+                break
+            time = float(data[0])
+        if len(data) > 1:
+            x_velocity = float(data[2])
+            y_velocity = float(data[3])
+            velocity_modules.append((x_velocity**2 + y_velocity**2)**(1/2))
+
+    f.close()
+
+    weights = np.ones_like(velocity_modules) / len(velocity_modules)
+    plt.hist(velocity_modules, bins=np.arange(min(velocity_modules), max(velocity_modules) + 0.25, 0.25), weights=weights)
     plt.gca().xaxis.set_minor_locator(MultipleLocator(0.25))
     plt.show()
 
