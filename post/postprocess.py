@@ -142,6 +142,7 @@ def compute_velocity_probability_at_t0(filename):
     weights = np.ones_like(velocity_modules) / len(velocity_modules)
     plt.hist(velocity_modules, bins=np.arange(min(velocity_modules), max(velocity_modules) + 0.25, 0.25), weights=weights)
     plt.gca().xaxis.set_minor_locator(MultipleLocator(0.25))
+
     plt.show()
 
 

@@ -48,7 +48,8 @@ def generate_points(input_area_length, particle_number, small_radius, small_mass
 
         if not isTouchingBorder:
             # Generating velocity, it is done using accepted answer in https://stackoverflow.com/questions/5837572/generate-a-random-point-within-a-circle-uniformly
-            r = velocity_mod_limit * math.sqrt(random.uniform(0, 1))
+            #r = velocity_mod_limit * math.sqrt(random.uniform(0, 1))
+            r = random.uniform(0, velocity_mod_limit)
             theta = random.uniform(0, 1) * 2 * math.pi
             target_vx = r * math.cos(theta)
             target_vy = r * math.sin(theta)
