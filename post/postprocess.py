@@ -14,6 +14,7 @@ from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
 COLLISION_FREQUENCY = "cf"
 COLLISION_PROBABILITY = "cp"
 VELOCITY_PROBABILITY = "vp"
+VELOCITY_PROBABILITY_T0 = "vp0"
 TRAJECTORY_ONE = "tro"
 TRAJECTORY_MULTIPLE = "trm"
 
@@ -320,6 +321,9 @@ def main():
     elif args.process_type == VELOCITY_PROBABILITY:
         print("Computing velocity probability...")
         compute_velocity_probability('./parsable_files/dynamic.txt')
+    elif args.process_type == VELOCITY_PROBABILITY_T0:
+        print("Computing velocity probability...")
+        compute_velocity_probability_at_t0('./parsable_files/dynamic.txt')
 
 
 # call main
