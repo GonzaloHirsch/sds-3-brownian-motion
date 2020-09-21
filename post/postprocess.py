@@ -422,7 +422,9 @@ def organize_data(data):
     times, msds, sds = zip(*sorted(zip(times, means, stds)))
     return times, msds, sds
 
-
+# Our approximation of the linear regression y = mx + b
+def r(x, c):
+    return c*x
 
 # Calculate the mean and standard deviation of the MSD
 def calculate_average_msd(filename):
@@ -469,41 +471,63 @@ def calculate_average_msd(filename):
             # Set the y axis label
             plt.ylabel('Desvio Cuadratico Medio')
 
+            f,(ax,ax2) = plt.subplots(1,2,sharey=True, facecolor='w', gridspec_kw={'width_ratios': [0.3, 7]})
+
             times, msds, sds = organize_data(stats[N][stat_type])
 
-            plt.scatter(times, msds)
+            ax2.scatter(times, msds)
 
-            plt.errorbar(times, msds, yerr=sds, fmt='o', color='black',
+            ax2.errorbar(times, msds, yerr=sds, fmt='o', color='black',
                              ecolor='lightgray', elinewidth=3, capsize=0)
 
-            min_error, c, b = calculate_regression(times, msds)
+            ax.scatter(times, msds)
 
-            plt.plot(times, [c*x+b for x in times])
+            ax.errorbar(times, msds, yerr=sds, fmt='o', color='black',
+                         ecolor='lightgray', elinewidth=3, capsize=0)
 
-            plt.show()
+            min_error, c = calculate_regression(times, msds)
 
+            ax.set_xlim(0,1)
+            ax2.set_xlim(24,50)
 
-# Our approximation of the linear regression y = mx + b
-def f(x, c, b):
-    return c*x + b
+            ax2.plot(times, [r(x,c) for x in times])
+            ax.plot([0, 1], [r(x,c) for x in [0, 1]])
+
+            # hide the spines between ax and ax2
+            ax.spines['right'].set_visible(False)
+            ax2.spines['left'].set_visible(False)
+            ax2.yaxis.tick_right()
+
+        # Make the spacing between the two axes a bit smaller
+            plt.subplots_adjust(wspace=0.07)
+
+            d = .015 # how big to make the diagonal lines in axes coordinates
+            # arguments to pass plot, just so we don't keep repeating them
+            kwargs = dict(transform=ax.transAxes, color='k', clip_on=False)
+            ax.plot((1-d,1+d),(-d,+d), **kwargs) # top-left diagonal
+            ax.plot((1-d,1+d),(1-d,1+d), **kwargs) # bottom-left diagonal
+
+            kwargs.update(transform=ax2.transAxes) # switch to the bottom axes
+            ax2.plot((-d,d),(-d,+d), **kwargs) # top-right diagonal
+            ax2.plot((-d,d),(1-d,1+d), **kwargs) # bottom-right diagonal
+
+            plt.savefig('images/' + str(N) + '_' + str(stat_type) + '_msd.png')
+
 
 def calculate_regression(x_array, y_array):
     min_error = 100
     min_c = 100
-    min_b = 100
 
-    for b in np.arange(0, 1, 0.1):
-        for c in np.arange(-2, 2.0, 0.001):
-            error = 0
-            for index in range(0, len(x_array)):
-                error += (y_array[index] - f(x_array[index], c, b))**2
+    for c in np.arange(-2, 2, 0.001):
+        error = 0
+        for index in range(0, len(x_array)):
+            error += (y_array[index] - r(x_array[index], c))**2
 
-            if error < min_error:
-                min_error = error
-                min_c = c
-                min_b = b
+        if error < min_error:
+            min_error = error
+            min_c = c
 
-    return min_error, min_c, min_b
+    return min_error, min_c
 
 
 # main() function
