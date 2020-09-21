@@ -153,6 +153,10 @@ def main():
     # Generating the files
     generate_files(int(args.area_length), points)
 
+    if len(points) != int(args.particle_number) + 1:
+        exit(1)
+
+
 # call main
 if __name__ == '__main__':
     main()

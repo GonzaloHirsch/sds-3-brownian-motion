@@ -2,6 +2,7 @@ import numpy as np
 import math
 import argparse
 import random as rnd
+import statistics
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
@@ -18,6 +19,7 @@ VELOCITY_PROBABILITY_T0 = "vp0"
 TRAJECTORY_ONE = "tro"
 TRAJECTORY_MULTIPLE = "trm"
 MSD = "msd"
+MSD_GRAPH = "msdg"
 
 def compute_collision_frequency(filename, outfilename):
     f = open(filename, 'r')
@@ -338,27 +340,29 @@ def generate_msd_frames(filename, clock_time, start_time):
 def parse_static_file(filename):
     f = open(filename, 'r')
 
+    radius = []
     index = 0
     length = 0
 
     for line in f:
         data = line.rstrip("\n").split(" ")
-        if index == 0:
+        if index > 0:
+            radius.append(float(data[1]))
+        else:
             length = float(data[0])
         index += 1
 
-    f.close()
+    return radius, length, index-1
 
-    return length, index-1
-
-def compute_msd_for_run(input_filename, static_file, output_filename):
+def compute_msd_for_run(input_filename, static_file, output_filename, particle_index):
+    delta = 0.0001
     total_time = compute_max_time(input_filename)
 
     # Only want to consider the simulations with time longer than 50 seconds
     if total_time < 50:
         return
 
-    L, N = parse_static_file(static_file)
+    radius, L, N = parse_static_file(static_file)
 
     start_time = 25.0
     clock_time = start_time/10.0
@@ -366,7 +370,13 @@ def compute_msd_for_run(input_filename, static_file, output_filename):
 
     msd_stats = []
     for frame in chosen_frames:
-        particle = frame[0]
+        particle = frame[particle_index]
+        particle_radius = radius[particle_index]
+
+        if abs(particle[0] + particle_radius - L) < delta or abs(particle[1] + particle_radius - L) < delta or abs(particle[0] - particle_radius) < delta or abs(particle[1] - particle_radius) < delta:
+            print ("Particle hit a wall, will disregard the simulation data for particle " + str(particle_index))
+            return
+
         x_displ = (particle[0] - L/2)**2
         y_displ = (particle[1] - L/2)**2
         msd_stats.append(x_displ + y_displ)
@@ -374,11 +384,126 @@ def compute_msd_for_run(input_filename, static_file, output_filename):
     output = open(output_filename, 'a')
 
     output.write('{}\t'.format(N))
+    if particle_index == 0:
+        output.write('B\t')
+    else:
+        output.write('S\t')
+
     for msd in msd_stats:
         output.write('{}\t'.format(msd))
     output.write('\n')
 
     output.close()
+
+
+def calculate_msd_mean(msds):
+    return statistics.mean(msds)
+
+def calculate_msd_sd(msds, mean):
+    if len(msds) > 1:
+        return statistics.stdev(msds, mean)
+    else:
+        return 0
+
+
+def organize_data(data):
+    times = []
+    means = []
+    stds = []
+
+    start_time = 25.0
+    clock_time = start_time/10.0
+
+    for msd in data:
+        times = np.arange(start_time, 2*start_time, clock_time)
+        means.append(msd['mean'])
+        stds.append(msd['sd'])
+
+    times, msds, sds = zip(*sorted(zip(times, means, stds)))
+    return times, msds, sds
+
+
+
+# Calculate the mean and standard deviation of the MSD
+def calculate_average_msd(filename):
+    f = open(filename, 'r')
+    stats = {}
+
+    for line in f:
+        data = line.rstrip("\t\n").split("\t")
+        N = int(data[0])
+        type = data[1]
+
+        if not N in stats:
+            stats[N] = {}
+
+        if not type in stats[N]:
+            stats[N][type] = []
+
+        # Removing N and type fromt the data
+        msds = [float(x) for x in data[2:]]
+
+        index = 0
+        for msd in msds:
+            if len(stats[N][type]) <= index:
+                stats[N][type].append([])
+            stats[N][type][index].append(msd)
+            index += 1
+
+    for N in stats:
+        for type in stats[N]:
+            index = 0
+            for msds in stats[N][type]:
+                mean = calculate_msd_mean(msds)
+                sd = calculate_msd_sd(msds, mean)
+                stats[N][type][index] = {'mean': mean, 'sd': sd}
+                index += 1
+
+    for N in stats:
+        for stat_type in stats[N]:
+            plt.clf()
+
+            # Set the x axis label
+            plt.xlabel('Tiempo (s)')
+
+            # Set the y axis label
+            plt.ylabel('Desvio Cuadratico Medio')
+
+            times, msds, sds = organize_data(stats[N][stat_type])
+
+            plt.scatter(times, msds)
+
+            plt.errorbar(times, msds, yerr=sds, fmt='o', color='black',
+                             ecolor='lightgray', elinewidth=3, capsize=0)
+
+            min_error, c, b = calculate_regression(times, msds)
+
+            plt.plot(times, [c*x+b for x in times])
+
+            plt.show()
+
+
+# Our approximation of the linear regression y = mx + b
+def f(x, c, b):
+    return c*x + b
+
+def calculate_regression(x_array, y_array):
+    min_error = 100
+    min_c = 100
+    min_b = 100
+
+    for b in np.arange(0, 1, 0.1):
+        for c in np.arange(-2, 2.0, 0.001):
+            error = 0
+            for index in range(0, len(x_array)):
+                error += (y_array[index] - f(x_array[index], c, b))**2
+
+            if error < min_error:
+                min_error = error
+                min_c = c
+                min_b = b
+
+    return min_error, min_c, min_b
 
 
 # main() function
@@ -415,8 +540,10 @@ def main():
         compute_velocity_probability_at_t0('./parsable_files/dynamic.txt')
     elif args.process_type == MSD:
         print("Computing MSD of a particle...")
-        compute_msd_for_run('./parsable_files/dynamic.txt', './parsable_files/static.txt', './parsable_files/msd_stats.txt')
-
+        compute_msd_for_run('./parsable_files/dynamic.txt', './parsable_files/static.txt', './parsable_files/msd_stats.txt', 0)
+    elif args.process_type == MSD_GRAPH:
+        print("Creating MSD graph...")
+        calculate_average_msd('./parsable_files/msd_stats.txt')
 
 # call main
 if __name__ == '__main__':
