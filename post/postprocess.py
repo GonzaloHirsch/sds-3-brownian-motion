@@ -465,13 +465,13 @@ def calculate_average_msd(filename):
         for stat_type in stats[N]:
             plt.clf()
 
+            f,(ax,ax2) = plt.subplots(1,2,sharey=True, facecolor='w', gridspec_kw={'width_ratios': [0.3, 7]})
+
             # Set the x axis label
-            plt.xlabel('Tiempo (s)')
+            ax2.set_xlabel('Tiempo (s)')
 
             # Set the y axis label
-            plt.ylabel('Desvio Cuadratico Medio')
-
-            f,(ax,ax2) = plt.subplots(1,2,sharey=True, facecolor='w', gridspec_kw={'width_ratios': [0.3, 7]})
+            ax.set_ylabel('Desvio Cuadratico Medio')
 
             times, msds, sds = organize_data(stats[N][stat_type])
 
