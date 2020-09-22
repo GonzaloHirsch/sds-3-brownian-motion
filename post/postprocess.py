@@ -371,6 +371,8 @@ def retrieve_particle_close_to_center(filename, radius, L, N, invalid_particles)
     f = open(filename, 'r')
     min_dist = 100
     min_index = 0
+    min_x_center = L/2
+    min_y_center = L/2
 
     for line in f:
         data = line.rstrip("\n").split(" ")
@@ -385,12 +387,14 @@ def retrieve_particle_close_to_center(filename, radius, L, N, invalid_particles)
             if dist < min_dist and radius[index] < 0.5 and index not in invalid_particles:
                 min_dist = dist
                 min_index = index
+                min_x_center = float(data[0])
+                min_y_center = float(data[1])
 
             index += 1
         else:
             break
 
-    return min_index
+    return min_index, min_x_center, min_y_center
 
 
 def compute_msd_for_run(input_filename, output_filename, type, radius, L, N):
@@ -406,16 +410,16 @@ def compute_msd_for_run(input_filename, output_filename, type, radius, L, N):
     chosen_frames, particles_hit_wall = generate_msd_frames(input_filename, clock_time, start_time, 2*start_time, radius, L)
 
     if type == 'S':
-        particle_index = retrieve_particle_close_to_center('./parsable_files/dynamic.txt', radius, L, N, particles_hit_wall)
+        particle_index, x_center, y_center = retrieve_particle_close_to_center('./parsable_files/dynamic.txt', radius, L, N, particles_hit_wall)
     else:
-        particle_index = 0
+        particle_index, x_center, y_center = 0, L/2, L/2
 
     msd_stats = []
     for frame in chosen_frames:
         particle = frame[particle_index]
 
-        x_displ = (particle[0] - L/2)**2
-        y_displ = (particle[1] - L/2)**2
+        x_displ = (particle[0] - x_center)**2
+        y_displ = (particle[1] - y_center)**2
         msd_stats.append(x_displ + y_displ)
 
     output = open(output_filename, 'a')
