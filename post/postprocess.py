@@ -411,6 +411,9 @@ def compute_msd_for_run(input_filename, output_filename, type, radius, L, N):
 
     if type == 'S':
         particle_index, x_center, y_center = retrieve_particle_close_to_center('./parsable_files/dynamic.txt', radius, L, N, particles_hit_wall)
+        if particle_index == 0:
+            print('No small particle that hasnt impacted with the wall')
+            return
     else:
         particle_index, x_center, y_center = 0, L/2, L/2
 
