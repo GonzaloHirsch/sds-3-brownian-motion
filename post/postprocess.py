@@ -18,7 +18,8 @@ VELOCITY_PROBABILITY = "vp"
 VELOCITY_PROBABILITY_T0 = "vp0"
 TRAJECTORY_ONE = "tro"
 TRAJECTORY_MULTIPLE = "trm"
-MSD = "msd"
+MSD_B = "msdb"
+MSD_S = "msds"
 MSD_GRAPH = "msdg"
 
 def compute_collision_frequency(filename, outfilename):
@@ -299,25 +300,34 @@ def compute_trajectory_multiple(dynamic_filename, dynamic_slower_filename, dynam
     plt.show()
 
 
-def generate_msd_frames(filename, clock_time, start_time):
+def generate_msd_frames(filename, clock_time, start_time, end_time, radius, L):
     f = open(filename, 'r')
 
     processed_iterations = {}
     processed_times = []
     skip = True
+    index = 0
+    particles_hit_wall = set([])
+    delta = 0.001
 
     for line in f:
         data = line.rstrip("\n").split(" ")
         if len(data) == 1:
+            index = 0
             time = float(data[0])
-            if (time >= start_time):
+            if time > end_time:
+                skip = True
+            elif time >= start_time:
                 processed_iterations[time] = []
                 processed_times.append(time)
                 skip = False
         else:
             if not skip:
                 point = [float(x) for x in data]
+                if abs(point[0] + radius[index] - L) < delta or abs(point[1] + radius[index] - L) < delta or abs(point[0] - radius[index]) < delta or abs(point[1] - radius[index]) < delta:
+                    particles_hit_wall.add(index)
                 processed_iterations[time].append(point)
+                index += 1
 
     f.close()
 
@@ -332,10 +342,10 @@ def generate_msd_frames(filename, clock_time, start_time):
         if t >= clock_current:
             chosen_times.append(processed_iterations[t])
             clock_current += clock_time
-            if clock_current > 50:
-                break
+            #if clock_current > 50:
+            #    break
 
-    return chosen_times
+    return chosen_times, particles_hit_wall
 
 def parse_static_file(filename):
     f = open(filename, 'r')
@@ -354,28 +364,55 @@ def parse_static_file(filename):
 
     return radius, length, index-1
 
-def compute_msd_for_run(input_filename, static_file, output_filename, particle_index):
-    delta = 0.0001
+
+def retrieve_particle_close_to_center(filename, radius, L, N, invalid_particles):
+    # Want any particle within a unit length away from the center
+    # Big particle has a radius of 0.7 and small on of 0.9 --> 0.1 length of range
+    f = open(filename, 'r')
+    min_dist = 100
+    min_index = 0
+
+    for line in f:
+        data = line.rstrip("\n").split(" ")
+        if len(data) == 1:
+            time = float(data[0])
+            index = 0
+        # dont want to include the big particle
+        elif len(data) > 1 and time <= 0:
+            x = float(data[0]) - L/2
+            y = float(data[1]) - L/2
+            dist = (x**2 + y**2)**(1/2)
+            if dist < min_dist and radius[index] < 0.5 and index not in invalid_particles:
+                min_dist = dist
+                min_index = index
+
+            index += 1
+        else:
+            break
+
+    return min_index
+
+
+def compute_msd_for_run(input_filename, output_filename, type, radius, L, N):
     total_time = compute_max_time(input_filename)
 
     # Only want to consider the simulations with time longer than 50 seconds
     if total_time < 50:
+        print('Total time (' + str(total_time) + ') must be larger than 50')
         return
-
-    radius, L, N = parse_static_file(static_file)
 
     start_time = 25.0
     clock_time = start_time/10.0
-    chosen_frames = generate_msd_frames(input_filename, clock_time, start_time)
+    chosen_frames, particles_hit_wall = generate_msd_frames(input_filename, clock_time, start_time, 2*start_time, radius, L)
+
+    if type == 'S':
+        particle_index = retrieve_particle_close_to_center('./parsable_files/dynamic.txt', radius, L, N, particles_hit_wall)
+    else:
+        particle_index = 0
 
     msd_stats = []
     for frame in chosen_frames:
         particle = frame[particle_index]
-        particle_radius = radius[particle_index]
-
-        if abs(particle[0] + particle_radius - L) < delta or abs(particle[1] + particle_radius - L) < delta or abs(particle[0] - particle_radius) < delta or abs(particle[1] - particle_radius) < delta:
-            print ("Particle hit a wall, will disregard the simulation data for particle " + str(particle_index))
-            return
 
         x_displ = (particle[0] - L/2)**2
         y_displ = (particle[1] - L/2)**2
@@ -422,7 +459,7 @@ def organize_data(data):
     times, msds, sds = zip(*sorted(zip(times, means, stds)))
     return times, msds, sds
 
-# Our approximation of the linear regression y = mx + b
+# Our approximation of the linear regression y = mx + b with b=0
 def r(x, c):
     return c*x
 
@@ -529,7 +566,6 @@ def calculate_regression(x_array, y_array):
 
     return min_error, min_c
 
-
 # main() function
 def main():
     # Command line args are in sys.argv[1], sys.argv[2] ..
@@ -562,9 +598,14 @@ def main():
     elif args.process_type == VELOCITY_PROBABILITY_T0:
         print("Computing velocity probability...")
         compute_velocity_probability_at_t0('./parsable_files/dynamic.txt')
-    elif args.process_type == MSD:
-        print("Computing MSD of a particle...")
-        compute_msd_for_run('./parsable_files/dynamic.txt', './parsable_files/static.txt', './parsable_files/msd_stats.txt', 0)
+    elif args.process_type == MSD_B:
+        print("Computing MSD of main particle...")
+        radius, L, N = parse_static_file('./parsable_files/static.txt')
+        compute_msd_for_run('./parsable_files/dynamic.txt', './parsable_files/msd_stats.txt', 'B', radius, L, N)
+    elif args.process_type == MSD_S:
+        print("Computing MSD of small particle...")
+        radius, L, N = parse_static_file('./parsable_files/static.txt')
+        compute_msd_for_run('./parsable_files/dynamic.txt', './parsable_files/msd_stats.txt', 'S', radius, L, N)
     elif args.process_type == MSD_GRAPH:
         print("Creating MSD graph...")
         calculate_average_msd('./parsable_files/msd_stats.txt')
