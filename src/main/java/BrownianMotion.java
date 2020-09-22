@@ -9,8 +9,6 @@ public class BrownianMotion {
     private double elapsedTime = 0;
     private boolean mainHasHitWall = false;
 
-    private static final int[] WALLS = new int[]{Constant.TOP_WALL_INDEX, Constant.RIGHT_WALL_INDEX, Constant.BOTTOM_WALL_INDEX, Constant.LEFT_WALL_INDEX};
-
     public BrownianMotion(final double areaLength, final Map<Integer, Particle> particles) {
         // Map all particles to the id
         this.particles = particles;
@@ -71,8 +69,8 @@ public class BrownianMotion {
             }
 
             // Compare to the walls
-            for (int wall : WALLS) {
-                this.collisions.add(new CollisionInformation(current.getId(), wall, current.calculateCollisionDelta(wall, this.areaLength)));
+            for (Walls wall : Walls.values()) {
+                this.collisions.add(new CollisionInformation(current.getId(), wall.getValue(), current.calculateCollisionDelta(wall, this.areaLength)));
             }
         }
     }
@@ -111,7 +109,7 @@ public class BrownianMotion {
         }
 
         // Updating the deltas for each remaining collision
-        this.collisions.stream().forEach(c -> c.delta -= currentCollision.delta);
+        this.collisions.forEach(c -> c.delta -= currentCollision.delta);
 
         // Updating the particle positions for a given delta
         this.updateParticlePositionsForDelta(currentCollision.getDelta());
@@ -139,8 +137,8 @@ public class BrownianMotion {
             }
 
             // Compare to the walls
-            for (int wall : WALLS) {
-                collisions.add(new CollisionInformation(current.getId(), wall, current.calculateCollisionDelta(wall, this.areaLength)));
+            for (Walls wall : Walls.values()) {
+                collisions.add(new CollisionInformation(current.getId(), wall.getValue(), current.calculateCollisionDelta(wall, this.areaLength)));
             }
         }
 
@@ -158,8 +156,8 @@ public class BrownianMotion {
             }
 
             // Compare to the walls
-            for (int wall : WALLS) {
-                collisions.add(new CollisionInformation(current.getId(), wall, current.calculateCollisionDelta(wall, this.areaLength)));
+            for (Walls wall : Walls.values()) {
+                collisions.add(new CollisionInformation(current.getId(), wall.getValue(), current.calculateCollisionDelta(wall, this.areaLength)));
             }
         }
 

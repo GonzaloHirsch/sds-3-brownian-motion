@@ -163,15 +163,15 @@ public class Particle implements Comparable<Particle> {
      * @param areaLength length of the area of study
      * @return delta of time to collision, max value if not possible
      */
-    public double calculateCollisionDelta(int wallIndex, double areaLength){
+    public double calculateCollisionDelta(Walls wallIndex, double areaLength){
         switch (wallIndex){
-            case Constant.TOP_WALL_INDEX:
+            case TOP_WALL_INDEX:
                 return this.vy <= 0 ? Double.MAX_VALUE : (areaLength - this.radius - this.y)/this.vy;
-            case Constant.RIGHT_WALL_INDEX:
+            case RIGHT_WALL_INDEX:
                 return this.vx <= 0 ? Double.MAX_VALUE : (areaLength - this.radius - this.x)/this.vx;
-            case Constant.BOTTOM_WALL_INDEX:
+            case BOTTOM_WALL_INDEX:
                 return this.vy >= 0 ? Double.MAX_VALUE : (this.radius - this.y)/this.vy;
-            case Constant.LEFT_WALL_INDEX:
+            case LEFT_WALL_INDEX:
                 return this.vx >= 0 ? Double.MAX_VALUE : (this.radius - this.x)/this.vx;
             default:
                 return Double.MAX_VALUE;
@@ -183,7 +183,7 @@ public class Particle implements Comparable<Particle> {
      * @param wallIndex index of a wall (Constant.TOP_WALL_INDEX: top, Constant.RIGHT_WALL_INDEX: right, Constant.BOTTOM_WALL_INDEX: bottom, Constant.LEFT_WALL_INDEX: left)
      */
     public void calculateWallCollisionVelocity(int wallIndex) {
-        if (wallIndex == Constant.TOP_WALL_INDEX || wallIndex == Constant.BOTTOM_WALL_INDEX) {
+        if (wallIndex == Walls.TOP_WALL_INDEX.getValue() || wallIndex == Walls.BOTTOM_WALL_INDEX.getValue()) {
             // Hitting horizontal walls inverts the vy velocity
             this.vy = -1 * this.vy;
         } else {
