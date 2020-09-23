@@ -573,7 +573,7 @@ def compute_msd_for_run(input_filename, output_filename, type, radius, L, N):
         y_displ = (particle[1] - y_center)**2
         msd_stats.append(x_displ + y_displ)
 
-    output = open(output_filename, 'a')
+    output = open(output_filename, 'a+')
 
     output.write('{}\t'.format(N))
     if particle_index == 0:
