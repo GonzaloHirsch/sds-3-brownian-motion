@@ -486,8 +486,6 @@ def generate_msd_frames(filename, clock_time, start_time, end_time, radius, L):
         if t >= clock_current:
             chosen_times.append(processed_iterations[t])
             clock_current += clock_time
-            #if clock_current > 50:
-            #    break
 
     return chosen_times, particles_hit_wall
 
@@ -545,15 +543,15 @@ def compute_msd_for_run(input_filename, output_filename, type, radius, L, N):
     total_time = compute_max_time(input_filename)
 
     # Only want to consider the simulations with time longer than 50 seconds
-    if total_time < 50:
+    if total_time < 40:
         print('Total time (' + str(total_time) + ') must be larger than 50')
         return
 
-    if total_time > 60:
+    if total_time > 50:
         print('Total time (' + str(total_time) + ') must be smaller than 60')
         return
 
-    start_time = 25.0
+    start_time = 20.0
     clock_time = start_time/10.0
     chosen_frames, particles_hit_wall = generate_msd_frames(input_filename, clock_time, start_time, 2*start_time, radius, L)
 
@@ -603,7 +601,7 @@ def organize_data(data):
     means = []
     stds = []
 
-    start_time = 25.0
+    start_time = 20.0
     clock_time = start_time/10.0
 
     for msd in data:
