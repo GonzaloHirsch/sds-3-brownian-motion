@@ -3,7 +3,7 @@ import java.util.stream.Collectors;
 
 public class BrownianMotion {
     private final Map<Integer, Particle> particles;
-    private TreeSet<CollisionInformation> collisions = new TreeSet<>();
+    private final TreeSet<CollisionInformation> collisions = new TreeSet<>();
     private final double areaLength;
 
     private double elapsedTime = 0;

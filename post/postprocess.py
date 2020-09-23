@@ -122,6 +122,8 @@ def compute_velocity_probability(filename):
     f.close()
 
     weights = np.ones_like(velocity_modules) / len(velocity_modules)
+    plt.xlabel('Módulo de la velocidad (m/s)')
+    plt.ylabel('Probabilidad')
     plt.hist(velocity_modules, bins=np.arange(min(velocity_modules), max(velocity_modules) + 0.25, 0.25), weights=weights)
     plt.gca().xaxis.set_minor_locator(MultipleLocator(0.25))
     plt.show()
@@ -145,6 +147,8 @@ def compute_velocity_probability_at_t0(filename):
 
     f.close()
 
+    plt.xlabel('Módulo de la velocidad (m/s)')
+    plt.ylabel('Probabilidad')
     weights = np.ones_like(velocity_modules) / len(velocity_modules)
     plt.hist(velocity_modules, bins=np.arange(min(velocity_modules), max(velocity_modules) + 0.25, 0.25), weights=weights)
     plt.gca().xaxis.set_minor_locator(MultipleLocator(0.25))
@@ -405,6 +409,10 @@ def compute_msd_for_run(input_filename, output_filename, type, radius, L, N):
         print('Total time (' + str(total_time) + ') must be larger than 50')
         return
 
+    if total_time > 60:
+        print('Total time (' + str(total_time) + ') must be smaller than 60')
+        return
+
     start_time = 25.0
     clock_time = start_time/10.0
     chosen_frames, particles_hit_wall = generate_msd_frames(input_filename, clock_time, start_time, 2*start_time, radius, L)
@@ -530,6 +538,12 @@ def calculate_average_msd(filename):
                          ecolor='lightgray', elinewidth=3, capsize=0)
 
             min_error, c = calculate_regression(times, msds)
+
+            print('\nFor ' + str(N) + ' particles and analyzing a ' + stat_type + ' we have:')
+            print('Regression line = ' + str(c) + 't')
+            print('Diffusion coefficient = ' + str(c/2))
+            print('Total error = ' + str(min_error))
+            print('\n---------------------------------------------------')
 
             ax.set_xlim(0,1)
             ax2.set_xlim(24,50)
