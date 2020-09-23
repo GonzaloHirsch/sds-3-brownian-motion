@@ -228,6 +228,8 @@ def compute_velocity_probability(filename):
         weights = np.ones_like(velocity_modules[k]) / len(velocity_modules[k])
         plt.hist(velocity_modules[k], bins=np.arange(min(velocity_modules[k]), max(velocity_modules[k]) + 0.25, 0.25), weights=weights)
         plt.gca().xaxis.set_minor_locator(MultipleLocator(0.25))
+        plt.gca().set_xlabel('Módulo de la Velocidad (m/s)')
+        plt.gca().set_ylabel('Probabilidad')
         plt.show()
 
 def extract_velocity_probability_at_t0(filename, outfilename):
@@ -290,6 +292,8 @@ def compute_velocity_probability_at_t0(filename):
         weights = np.ones_like(velocity_modules[k]) / len(velocity_modules[k])
         plt.hist(velocity_modules[k], bins=np.arange(min(velocity_modules[k]), max(velocity_modules[k]) + 0.25, 0.25), weights=weights)
         plt.gca().xaxis.set_minor_locator(MultipleLocator(0.25))
+        plt.gca().set_xlabel('Módulo de la Velocidad en t=0 (m/s)')
+        plt.gca().set_ylabel('Probabilidad')
         plt.show()
 
 def compute_trajectory_one(dynamic_filename, static_filename):
