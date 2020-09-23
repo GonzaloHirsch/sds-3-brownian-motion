@@ -13,14 +13,20 @@ from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
 # python3 post/postprocess.py -t cp
 
 COLLISION_FREQUENCY = "cf"
-COLLISION_PROBABILITY = "cp"
-VELOCITY_PROBABILITY = "vp"
-VELOCITY_PROBABILITY_T0 = "vp0"
+COLLISION_FREQUENCY_MEDIAN = "cfm"
+COMPUTE_COLLISION_PROBABILITY = "ccp"
+EXTRACT_COLLISION_PROBABILITY = "ecp"
+COMPUTE_VELOCITY_PROBABILITY = "cvp"
+EXTRACT_VELOCITY_PROBABILITY = "evp"
+COMPUTE_VELOCITY_PROBABILITY_T0 = "cvp0"
+EXTRACT_VELOCITY_PROBABILITY_T0 = "evp0"
 TRAJECTORY_ONE = "tro"
 TRAJECTORY_MULTIPLE = "trm"
 MSD_B = "msdb"
 MSD_S = "msds"
 MSD_GRAPH = "msdg"
+
+IMAGES = 'images/'
 
 def compute_collision_frequency(filename, outfilename):
     f = open(filename, 'r')
@@ -51,17 +57,45 @@ def compute_collision_frequency(filename, outfilename):
 
     wf.close()
 
-def compute_collision_probability(filename, outfilename):
+def compute_collision_frequency_median(filename):
+    f = open(filename, 'r')
+
+    frequency_data = {}
+
+    for line in f:
+        data = line.rstrip("\n").split(" ")
+        n = int(data[0])
+        count = int(data[1])
+        if not n in frequency_data:
+            frequency_data[n] = []
+        frequency_data[n].append(count)
+
+    f.close()
+
+    for k in frequency_data:
+        mean = statistics.mean(frequency_data[k])
+        std = statistics.stdev(frequency_data[k], mean)
+        print('Data for {} particles is MEAN = {} and STDEV = {}'.format(k, mean, std))
+
+def extract_collision_probability(filename, outfilename):
     f = open(filename, 'r')
 
     collision_times = []
     collision_timespans = []
+
+    count = 0
+    has_count = False
 
     for line in f:
         data = line.rstrip("\n").split(" ")
         if len(data) == 1:
             current_time = float(data[0])
             collision_times.append(current_time)
+            if count > 0:
+                has_count = True
+        else:
+            if not has_count:
+                count += 1
 
     f.close()
 
@@ -72,21 +106,53 @@ def compute_collision_probability(filename, outfilename):
             collision_timespans.append(collision_times[index] - collision_times[index - 1])
         index += 1
 
-    sum = 0
+    f = open(outfilename, 'a+')
 
-    for timespan in collision_timespans:
-        sum += timespan
+    f.write(str(count))
 
-    span_average = sum/len(collision_timespans)
+    for span in collision_timespans:
+        f.write(' {}'.format(span))
 
-    print("THE AVERAGE TIMESPAN IS", span_average)
+    f.write('\n')
 
-    weights = np.ones_like(collision_timespans) / len(collision_timespans)
+    f.close()
 
-    p = plt.hist(collision_timespans, bins=np.arange(min(collision_timespans), max(collision_timespans) + 0.0005, 0.0005), weights=weights)
-    plt.gca().xaxis.set_major_formatter(mtick.FormatStrFormatter('%.3f'))
-    plt.gca().xaxis.set_minor_locator(MultipleLocator(0.0005))
-    plt.show()
+def compute_collision_probability(filename):
+    f = open(filename, 'r')
+
+    spans = {}
+
+    for line in f:
+        data = line.rstrip("\n").split(" ")
+        if not int(data[0]) in spans:
+            spans[int(data[0])] = []
+        times = [float(x) for x in data[1:]]
+        for time in times:
+            spans[int(data[0])].append(time)
+
+    f.close()
+
+    for key in spans:
+        collision_timespans = spans[key]
+        mean = statistics.mean(collision_timespans)
+        std = statistics.stdev(collision_timespans, mean)
+        print('Collision timespans for particles is MEAN = {} and STDEV = {}'.format(mean, std))
+
+        weights = np.ones_like(collision_timespans) / len(collision_timespans)
+
+        if key > 100:
+            multiplier = 0.0005
+            formatter = '%.4f'
+        else:
+            multiplier = 0.0025
+            formatter = '%.2f'
+
+        p = plt.hist(collision_timespans, bins=np.arange(min(collision_timespans), max(collision_timespans) + multiplier, multiplier), weights=weights)
+        plt.gca().xaxis.set_major_formatter(mtick.FormatStrFormatter(formatter))
+        plt.gca().xaxis.set_minor_locator(MultipleLocator(multiplier))
+        plt.gca().set_xlabel('Tiempo entre colisiones (s)')
+        plt.gca().set_ylabel('Probabilidad de colisión')
+        plt.show()
 
 def compute_max_time(filename):
     f = open(filename, 'r')
@@ -101,36 +167,77 @@ def compute_max_time(filename):
     f.close()
     return time
 
-
-def compute_velocity_probability(filename):
+def extract_velocity_probability(filename, outfilename):
     time = (2/3) * compute_max_time(filename)
     velocity_modules = []
 
     current_time = 0
 
     f = open(filename, 'r')
+    particle_index = 0
+    count = 0
+    has_count = False
 
     for line in f:
         data = line.rstrip("\n").split(" ")
         if len(data) == 1:
             current_time = float(data[0])
+            particle_index = 0
+            if count > 0:
+                has_count = True
         if len(data) > 1:
-            if current_time > time:
-                x_velocity = float(data[2])
-                y_velocity = float(data[3])
-                velocity_modules.append((x_velocity**2 + y_velocity**2)**(1/2))
+            if particle_index > 0:
+                if current_time > time:
+                    x_velocity = float(data[2])
+                    y_velocity = float(data[3])
+                    velocity_modules.append((x_velocity**2 + y_velocity**2)**(1/2))
+            particle_index += 1
+            if not has_count:
+                count += 1
     f.close()
 
-    weights = np.ones_like(velocity_modules) / len(velocity_modules)
-    plt.hist(velocity_modules, bins=np.arange(min(velocity_modules), max(velocity_modules) + 0.25, 0.25), weights=weights)
-    plt.gca().xaxis.set_minor_locator(MultipleLocator(0.25))
-    plt.show()
+    f = open(outfilename, 'a+')
 
-def compute_velocity_probability_at_t0(filename):
+    f.write(str(count))
+    for v in velocity_modules:
+        f.write(' {}'.format(v))
+    f.write('\n')
+
+    f.close()
+
+def compute_velocity_probability(filename):
+    time = (2/3) * compute_max_time(filename)
+    velocity_modules = {}
+
+    current_time = 0
+
+    f = open(filename, 'r')
+    particle_index = 0
+
+    for line in f:
+        data = line.rstrip("\n").split(" ")
+        if not int(data[0]) in velocity_modules:
+            velocity_modules[int(data[0])] = []
+        vs = [float(x) for x in data[1:]]
+        for v in vs:
+            velocity_modules[int(data[0])].append(v)
+    f.close()
+
+    for k in velocity_modules:
+        print("Data for {}".format(k))
+        weights = np.ones_like(velocity_modules[k]) / len(velocity_modules[k])
+        plt.hist(velocity_modules[k], bins=np.arange(min(velocity_modules[k]), max(velocity_modules[k]) + 0.25, 0.25), weights=weights)
+        plt.gca().xaxis.set_minor_locator(MultipleLocator(0.25))
+        plt.show()
+
+def extract_velocity_probability_at_t0(filename, outfilename):
     f = open(filename, 'r')
 
     velocity_modules = []
     time = -1
+    particle_index = 0
+    count = 0
+    has_count = False
 
     for line in f:
         data = line.rstrip("\n").split(" ")
@@ -138,20 +245,52 @@ def compute_velocity_probability_at_t0(filename):
             if time >= 0:
                 break
             time = float(data[0])
+            particle_index = 0
+            if count > 0:
+                has_count = True
         if len(data) > 1:
-            x_velocity = float(data[2])
-            y_velocity = float(data[3])
-            velocity_modules.append((x_velocity**2 + y_velocity**2)**(1/2))
+            if particle_index > 0:
+                x_velocity = float(data[2])
+                y_velocity = float(data[3])
+                velocity_modules.append((x_velocity**2 + y_velocity**2)**(1/2))
+            particle_index += 1
+            if not has_count:
+                count += 1
 
     f.close()
 
-    weights = np.ones_like(velocity_modules) / len(velocity_modules)
-    plt.hist(velocity_modules, bins=np.arange(min(velocity_modules), max(velocity_modules) + 0.25, 0.25), weights=weights)
-    plt.gca().xaxis.set_minor_locator(MultipleLocator(0.25))
+    f = open(outfilename, 'a+')
 
-    plt.show()
+    f.write(str(count))
+    for v in velocity_modules:
+        f.write(' {}'.format(v))
+    f.write('\n')
 
+    f.close()
 
+def compute_velocity_probability_at_t0(filename):
+    f = open(filename, 'r')
+
+    velocity_modules = {}
+    time = -1
+    particle_index = 0
+
+    for line in f:
+        data = line.rstrip("\n").split(" ")
+        if not int(data[0]) in velocity_modules:
+            velocity_modules[int(data[0])] = []
+        vs = [float(x) for x in data[1:]]
+        for v in vs:
+            velocity_modules[int(data[0])].append(v)
+
+    f.close()
+
+    for k in velocity_modules:
+        print("Data for {}".format(k))
+        weights = np.ones_like(velocity_modules[k]) / len(velocity_modules[k])
+        plt.hist(velocity_modules[k], bins=np.arange(min(velocity_modules[k]), max(velocity_modules[k]) + 0.25, 0.25), weights=weights)
+        plt.gca().xaxis.set_minor_locator(MultipleLocator(0.25))
+        plt.show()
 
 def compute_trajectory_one(dynamic_filename, static_filename):
     f = open(dynamic_filename, 'r')
@@ -192,8 +331,8 @@ def compute_trajectory_one(dynamic_filename, static_filename):
     f.close()
 
     plt.plot(points_x, points_y, 'r', label = "Trayectoria")
-    plt.plot(points_x[0], points_y[0], 'go', label = "Inicio")
-    plt.plot(points_x[-1], points_y[-1], 'ko', label = "Fin")
+    plt.plot(points_x[0], points_y[0], 'go')
+    plt.plot(points_x[-1], points_y[-1], 'ko')
     plt.legend()
     plt.gca().set_aspect('equal', adjustable='box')
     plt.gca().xaxis.set_minor_locator(MultipleLocator(0.1))
@@ -282,13 +421,14 @@ def compute_trajectory_multiple(dynamic_filename, dynamic_slower_filename, dynam
 
     f.close()
 
-    plt.plot(points_x, points_y, 'r', label = "Trayectoria Normal")
-    plt.plot(points_x_slower, points_y_slower, 'g', label = "Trayectoria con menos Velocidad")
-    plt.plot(points_x_faster, points_y_faster, 'b', label = "Trayectoria con más Velocidad")
-    plt.plot(points_x[0], points_y[0], 'go', label = "Inicio")
-    plt.plot(points_x[-1], points_y[-1], 'ko', label = "Fin Normal")
-    plt.plot(points_x_slower[-1], points_y_slower[-1], 'kx', label = "Fin con menos Velocidad")
-    plt.plot(points_x_faster[-1], points_y_faster[-1], 'k*', label = "Fin con más Velocidad")
+    plt.plot(points_x, points_y, 'r', label = "Trayectoria con T1")
+    # T2 -> Menor temp, T3 -> Mas temp
+    plt.plot(points_x_slower, points_y_slower, 'g', label = "Trayectoria con T2")
+    plt.plot(points_x_faster, points_y_faster, 'b', label = "Trayectoria con T3")
+    plt.plot(points_x[0], points_y[0], 'kx')
+    plt.plot(points_x[-1], points_y[-1], 'kx')
+    plt.plot(points_x_slower[-1], points_y_slower[-1], 'kx')
+    plt.plot(points_x_faster[-1], points_y_faster[-1], 'kx')
     plt.legend()
     plt.gca().set_aspect('equal', adjustable='box')
     plt.gca().xaxis.set_minor_locator(MultipleLocator(0.1))
@@ -297,7 +437,7 @@ def compute_trajectory_multiple(dynamic_filename, dynamic_slower_filename, dynam
     plt.gca().set_ylabel('Posición Y')
     plt.xlim(radius, area_length - radius)
     plt.ylim(radius, area_length - radius)
-    plt.show()
+    plt.savefig(IMAGES + 'Item_4/multiple_trajectory.png')
 
 
 def generate_msd_frames(filename, clock_time, start_time, end_time, radius, L):
@@ -590,21 +730,33 @@ def main():
     if args.process_type == COLLISION_FREQUENCY:
         print("Computing collision frquency...")
         compute_collision_frequency('./parsable_files/dynamic.txt', './parsable_files/collision_frequency.txt')
-    elif args.process_type == COLLISION_PROBABILITY:
+    elif args.process_type == COLLISION_FREQUENCY_MEDIAN:
+         print("Computing collision frquency median...")
+         compute_collision_frequency_median('./parsable_files/collision_frequency.txt')
+    elif args.process_type == EXTRACT_COLLISION_PROBABILITY:
+        print("Extracting collision probability...")
+        extract_collision_probability('./parsable_files/dynamic.txt', './parsable_files/collision_spans.txt')
+    elif args.process_type == COMPUTE_COLLISION_PROBABILITY:
         print("Computing collision probability...")
-        compute_collision_probability('./parsable_files/dynamic.txt', './parsable_files/collision_frequency.txt')
+        compute_collision_probability('./parsable_files/collision_spans.txt')
     elif args.process_type == TRAJECTORY_ONE:
         print("Computing trajectory...")
         compute_trajectory_one('./parsable_files/dynamic.txt', './parsable_files/static.txt')
     elif args.process_type == TRAJECTORY_MULTIPLE:
         print("Computing trajectory...")
         compute_trajectory_multiple('./parsable_files/dynamic.txt', './parsable_files/dynamic_slower.txt',  './parsable_files/dynamic_faster.txt', './parsable_files/static.txt')
-    elif args.process_type == VELOCITY_PROBABILITY:
+    elif args.process_type == COMPUTE_VELOCITY_PROBABILITY:
         print("Computing velocity probability...")
-        compute_velocity_probability('./parsable_files/dynamic.txt')
-    elif args.process_type == VELOCITY_PROBABILITY_T0:
+        compute_velocity_probability('./parsable_files/velocity_probability.txt')
+    elif args.process_type == EXTRACT_VELOCITY_PROBABILITY:
+        print("Extracting velocity probability...")
+        extract_velocity_probability('./parsable_files/dynamic.txt', './parsable_files/velocity_probability.txt')
+    elif args.process_type == EXTRACT_VELOCITY_PROBABILITY_T0:
+        print("Extracting velocity probability...")
+        extract_velocity_probability_at_t0('./parsable_files/dynamic.txt', './parsable_files/velocity_probability_t0.txt')
+    elif args.process_type == COMPUTE_VELOCITY_PROBABILITY_T0:
         print("Computing velocity probability...")
-        compute_velocity_probability_at_t0('./parsable_files/dynamic.txt')
+        compute_velocity_probability_at_t0('./parsable_files/velocity_probability_t0.txt')
     elif args.process_type == MSD_B:
         print("Computing MSD of main particle...")
         radius, L, N = parse_static_file('./parsable_files/static.txt')

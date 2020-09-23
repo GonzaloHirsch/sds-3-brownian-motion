@@ -80,3 +80,7 @@ parsable_files/
 visualization/configuration.ovito
 
 .DS_Store
+
+backups/
+
+images/
