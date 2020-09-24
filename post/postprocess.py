@@ -541,17 +541,24 @@ def retrieve_particle_close_to_center(filename, radius, L, N, invalid_particles)
 
 def compute_msd_for_run(input_filename, output_filename, type, radius, L, N):
     total_time = compute_max_time(input_filename)
+    if N > 100:
+        lower_limit = 75
+        upper_limit = 90
+        start_time = 37.5
+    else:
+        lower_limit = 30
+        upper_limit = 45
+        start_time = 15.0
 
     # Only want to consider the simulations with time longer than 50 seconds
-    if total_time < 40:
-        print('Total time (' + str(total_time) + ') must be larger than 50')
+    if total_time < lower_limit:
+        print('Total time (' + str(total_time) + ') must be larger than', lower_limit)
         return
 
-    if total_time > 50:
-        print('Total time (' + str(total_time) + ') must be smaller than 60')
+    if total_time > upper_limit:
+        print('Total time (' + str(total_time) + ') must be smaller than', upper_limit)
         return
 
-    start_time = 20.0
     clock_time = start_time/10.0
     chosen_frames, particles_hit_wall = generate_msd_frames(input_filename, clock_time, start_time, 2*start_time, radius, L)
 
@@ -596,12 +603,15 @@ def calculate_msd_sd(msds, mean):
         return 0
 
 
-def organize_data(data):
+def organize_data(N, stat_type, data):
     times = []
     means = []
     stds = []
 
-    start_time = 20.0
+    if N > 100:
+        start_time = 37.5
+    else:
+        start_time = 15
     clock_time = start_time/10.0
 
     for msd in data:
@@ -661,9 +671,9 @@ def calculate_average_msd(filename):
             ax2.set_xlabel('Tiempo (s)')
 
             # Set the y axis label
-            ax.set_ylabel('Desvio Cuadratico Medio')
+            ax.set_ylabel('Desplazamiento Cuadratico Medio')
 
-            times, msds, sds = organize_data(stats[N][stat_type])
+            times, msds, sds = organize_data(N, stat_type, stats[N][stat_type])
 
             ax2.scatter(times, msds)
 
@@ -684,7 +694,10 @@ def calculate_average_msd(filename):
             print('\n---------------------------------------------------')
 
             ax.set_xlim(0,1)
-            ax2.set_xlim(24,50)
+            if N > 100:
+                ax2.set_xlim(36.5,70)
+            else:
+                ax2.set_xlim(14,30)
 
             ax2.plot(times, [r(x,c) for x in times])
             ax.plot([0, 1], [r(x,c) for x in [0, 1]])
